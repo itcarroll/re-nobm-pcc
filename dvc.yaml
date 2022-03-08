@@ -1,0 +1,10 @@
+stages:
+  perceptron:
+    cmd: python -m scripts.perceptron
+    deps:
+    - data
+    - scripts/kit.py
+    - scripts/perceptron.py
+    - scripts/preprocessing.py
+    outs:
+    - models/logs/perceptron
