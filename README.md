@@ -13,7 +13,7 @@ Instead, we aim to emulate the NOBM variables as a proof-of-concept for learning
     1. Activate the environment with `source $(poetry env info -p)/bin/activate`.
 1. Pull project data from a public Google Drive using [DVC](https://dvc.org).
    For good performance without additional customization, contact @itcarroll with your Google Account email to request permission to use an existing [Google Cloud Project](https://dvc.org/doc/user-guide/setup-google-drive-remote#using-a-custom-google-cloud-project-recommended)
-   The rather expansive permissions you must grant during the subsequent step are, at present, unavoidable.
+   The rather expansive permissions you must grant during the subsequent step are presently unavoidable (see [iterative/dvc#447](https://github.com/iterative/dvc/issues/4477)).
   1. Within the activated python environment, execute `dvc pull` and follow the instructions.
 
 ## Acknowledgements
