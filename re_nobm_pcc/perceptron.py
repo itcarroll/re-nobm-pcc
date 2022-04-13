@@ -1,5 +1,3 @@
-import shutil
-
 import numpy as np
 import tensorflow as tf
 
@@ -17,7 +15,7 @@ tf.random.set_seed(rng.integers(np.iinfo(np.int64).max))
 class Full(tf.keras.Model):
 
     def __init__(self, **kwargs):
-        input1 = tf.keras.Input(shape=(train['x'].sizes['wavelength'],))
+        input1 = tf.keras.Input(shape=(train.sizes['wavelength'],))
         dense1 = tf.keras.layers.Dense(units=64, activation=tf.nn.elu)
         dense2 = tf.keras.layers.Dense(units=train.sizes['component'])
         output1 = dense2(dense1(input1))
@@ -88,6 +86,7 @@ class Reduced(tf.keras.Model):
 
 
 if __name__ == '__main__':
+
     SIZES = 256
     EPOCHS = 1000
     Full().fit(train, validate, batch_size=SIZES, epochs=EPOCHS, verbose=0)

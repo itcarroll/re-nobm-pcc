@@ -1,23 +1,23 @@
 schema: '2.0'
 stages:
   perceptron:
-    cmd: python -m scripts.perceptron
+    cmd: python -m re_nobm_pcc.perceptron
     deps:
     - path: data
-      md5: 942037322cdf8dcf797b29793375f1c3.dir
-      size: 1734131761
+      md5: 311c67999373af7bcf996c1833ae5dff.dir
+      size: 1727710729
       nfiles: 13
-    - path: scripts/kit.py
+    - path: re_nobm_pcc/kit.py
       md5: ccc8b87ddd00cb6f343c1e349446386c
       size: 72
-    - path: scripts/perceptron.py
-      md5: 629bc546bb5a488a994393275bbe3c98
-      size: 3119
-    - path: scripts/preprocessing.py
-      md5: db3d30e32dd8b650a4870288e964f89b
+    - path: re_nobm_pcc/perceptron.py
+      md5: 56c233bc012bffb3cdd5420c9ba2b265
+      size: 3100
+    - path: re_nobm_pcc/preprocessing.py
+      md5: 68221f42fdf4adc35ca4cf5fae0728d4
       size: 1522
     outs:
     - path: models/logs/perceptron
-      md5: 78cc59c4fc07195da2b99333c27170c9.dir
-      size: 11251
+      md5: 0827f16cbd16633ce27246115575cbba.dir
+      size: 12372
       nfiles: 4

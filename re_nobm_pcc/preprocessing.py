@@ -10,7 +10,7 @@ DATA_DIR = PROJECT_DIR/'data'
 rng = np.random.default_rng(seed=7033760348669894684)
 
 PhytoChl = xr.open_mfdataset(
-    DATA_DIR.glob('monthly/mon2007*.R2020.nc4'),
+    DATA_DIR.glob('monthly/mon2007*.R2014.nc4'),
     decode_times=False,
     mask_and_scale=True,
 )

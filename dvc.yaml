@@ -1,10 +1,10 @@
 stages:
   perceptron:
-    cmd: python -m scripts.perceptron
+    cmd: python -m re_nobm_pcc.perceptron
     deps:
     - data
-    - scripts/kit.py
-    - scripts/perceptron.py
-    - scripts/preprocessing.py
+    - re_nobm_pcc/kit.py
+    - re_nobm_pcc/perceptron.py
+    - re_nobm_pcc/preprocessing.py
     outs:
     - models/logs/perceptron

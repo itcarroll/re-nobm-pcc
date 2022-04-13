@@ -1,5 +1,5 @@
 def test_split():
-    from scripts import preprocessing
+    from re_nobm_pcc import preprocessing
     train = preprocessing.train.sizes['pxl']
     validate = preprocessing.validate.sizes['pxl']
     test = preprocessing.test.sizes['pxl']
@@ -7,6 +7,6 @@ def test_split():
 
 
 def test_perceptron_model():
-    from scripts import perceptron
+    from re_nobm_pcc import perceptron
     assert perceptron.Full().built
     assert perceptron.Reduced().built
