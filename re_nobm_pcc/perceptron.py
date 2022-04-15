@@ -15,13 +15,16 @@ tf.random.set_seed(rng.integers(np.iinfo(np.int64).max))
 class Full(tf.keras.Model):
 
     def __init__(self, **kwargs):
-        input1 = tf.keras.Input(shape=(train.sizes['wavelength'],))
-        dense1 = tf.keras.layers.Dense(units=64, activation=tf.nn.elu)
-        dense2 = tf.keras.layers.Dense(units=train.sizes['component'])
-        output1 = dense2(dense1(input1))
+        input = tf.keras.Input(shape=(train.sizes['wavelength'],))
+        output = input
+        for _ in range(2):
+            layer = tf.keras.layers.Dense(units=32, activation=tf.nn.elu)
+            output = layer(output)
+        layer = tf.keras.layers.Dense(units=train.sizes['component'])
+        output = layer(output)
         functional = super().__init__(
-            inputs=[input1],
-            outputs=[output1],
+            inputs=[input],
+            outputs=[output],
             **kwargs,
         )
         self.compile(
@@ -68,7 +71,7 @@ class Reduced(tf.keras.Model):
 
     def fit(self, train, validate, **kwargs):
         return super().fit(
-            x=tf.ones((train['x'].sizes['pxl'],)),
+            x=tf.ones((train.sizes['pxl'],)),
             y=train['y'].values,
             callbacks=[
                 tf.keras.callbacks.EarlyStopping(
@@ -78,7 +81,7 @@ class Reduced(tf.keras.Model):
                 tf.keras.callbacks.TensorBoard(TENSORBOARD_LOGS_DIR/'reduced'),
             ],
             validation_data=(
-                tf.ones((validate['x'].sizes['pxl'],)),
+                tf.ones((validate.sizes['pxl'],)),
                 validate['y'].values,
             ),
             **kwargs,
@@ -88,7 +91,7 @@ class Reduced(tf.keras.Model):
 if __name__ == '__main__':
 
     SIZES = 256
-    EPOCHS = 1000
+    EPOCHS = 100
     Full().fit(train, validate, batch_size=SIZES, epochs=EPOCHS, verbose=0)
     Reduced().fit(train, validate, batch_size=SIZES, epochs=EPOCHS, verbose=0)
 

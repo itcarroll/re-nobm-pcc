@@ -14,6 +14,8 @@ PhytoChl = xr.open_mfdataset(
     decode_times=False,
     mask_and_scale=True,
 )
+PhytoChl = PhytoChl.sortby('time')
+PhytoChl['time'] = ('time', np.arange(1, 13))
 
 HyperLwn = xr.open_dataarray(
     DATA_DIR /'HyperLwn.R2014.nc4',
@@ -24,9 +26,15 @@ HyperLwn = xr.open_dataarray(
 HyperLwn = HyperLwn.where(
     HyperLwn != np.array(9.99e11, dtype=np.float32),
 )
-# TODO lwn needs coordinates 250:775
+HyperLwn['wavelength'] = ('wavelength', np.arange(250, 776))
+HyperLwn['lat'] = ('lat', PhytoChl['lat'].data)
+HyperLwn = HyperLwn.roll(lon=HyperLwn.sizes['lon']//2)
+HyperLwn['lon'] = ('lon', PhytoChl['lon'].data)
+HyperLwn = HyperLwn.rename(months='time')
+HyperLwn['time'] = ('time', PhytoChl['time'].data)
 
 with dask.config.set(**{'array.slicing.split_large_chunks': True}):
+    HyperLwn = HyperLwn.sortby('lon')
     dataset = (
         xr.merge(
             (
@@ -40,7 +48,7 @@ with dask.config.set(**{'array.slicing.split_large_chunks': True}):
                 ),
                 (
                     HyperLwn
-                    .stack({'pxl': ('months', 'lon', 'lat')})
+                    .stack({'pxl': ('time', 'lon', 'lat')})
                     .drop('pxl')
                     .rename('x')
                     .transpose()
