@@ -8,7 +8,7 @@ from .preprocessing import train, validate
 TENSORBOARD_LOGS_DIR = PROJECT_DIR/'models'/'logs'/'perceptron'
 CHECKPOINTS_DIR = PROJECT_DIR/'models'/'checkpoints'/'perceptron'
 
-rng = np.random.default_rng(seed=6776103501287072045)
+rng = np.random.default_rng(seed=6776103101287072045)
 tf.random.set_seed(rng.integers(np.iinfo(np.int64).max))
 
 
@@ -18,7 +18,7 @@ class Full(tf.keras.Model):
         input = tf.keras.Input(shape=(train.sizes['wavelength'],))
         output = input
         for _ in range(2):
-            layer = tf.keras.layers.Dense(units=32, activation=tf.nn.elu)
+            layer = tf.keras.layers.Dense(units=1024, activation=tf.nn.elu)
             output = layer(output)
         layer = tf.keras.layers.Dense(units=train.sizes['component'])
         output = layer(output)
@@ -40,7 +40,7 @@ class Full(tf.keras.Model):
             callbacks=[
                 tf.keras.callbacks.EarlyStopping(
                     monitor='val_loss',
-                    patience=10,
+                    patience=100,
                 ),
                 tf.keras.callbacks.TensorBoard(TENSORBOARD_LOGS_DIR/'full'),
             ],

@@ -1,6 +1,6 @@
 [core]
     remote = dvcstore
 ['remote "dvcstore"']
-    url = gdrive://1C3cwLz2pZ24t8lXhKIamIpuyN_hnGs3V
+    url = gdrive://1Tts6oXRyh2i-a26fKw7rfi3WvZQ7KpOi
     gdrive_client_id = 581836491302-6tnvb5ao86365pmb0jg3cfs90f78cn00.apps.googleusercontent.com
     gdrive_client_secret = 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
