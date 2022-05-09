@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from .kit import PROJECT_DIR
-from .preprocessing import train, validate
+from .preprocess import train, validate
 
 
 TENSORBOARD_LOGS_DIR = PROJECT_DIR/'models'/'logs'/'perceptron'

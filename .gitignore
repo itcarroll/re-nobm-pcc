@@ -1,10 +1,6 @@
-# macOS
 .DS_Store
-
-# cache
-__pycache__
-__init__.pyc
+*.pyc
+*.pyo
 .ipynb_checkpoints
-
-# DVC
-/data
+/*.ipynb
+/oasim

@@ -1,10 +1,56 @@
 stages:
-  perceptron:
-    cmd: python -m re_nobm_pcc.perceptron
+  oasim:
+    # generate corresponding lwn files
+    # want to do in parallel, but also ...
+    # foreach to allow re-using
+    # oasim currently gitignored
+    cmd: TODO
+  preprocess:
+    # prepare the features and labels for model training
+    # on gpu for tf analysis?
+    cmd: python -m re_nobm_pcc.preprocess
     deps:
-    - data
+    - data/nobm
     - re_nobm_pcc/kit.py
-    - re_nobm_pcc/perceptron.py
-    - re_nobm_pcc/preprocessing.py
+    - re_nobm_pcc/preprocess.py
     outs:
-    - models/logs/perceptron
+    - data/train
+    - data/validate
+    - data/test
+    - data/sample.nc
+  preview:
+    # generate report on the features and labels
+    cmd: >-
+      jupyter nbconvert --execute --no-input --to html
+      --output docs/preview.html notebooks/preview.ipynb
+    deps:
+    - data/nobm
+    - re_nobm_pcc/kit.py
+    - re_nobm_pcc/preprocess.py
+    - notebooks/preview.ipynb
+    outs:
+    - docs/preview.html
+  learn:
+    # train the model
+    cmd: python -m re_nobm_pcc.learn
+    deps:
+    - data/train
+    - data/validate
+    - data/test
+    - re_nobm_pcc/kit.py
+    - re_nobm_pcc/learn.py
+    outs:
+    - data/model
+    - data/fit.npz
+    metrics:
+    - data/metrics.json:
+        cache: false
+  evaluate:
+    # generate report on model performance
+    cmd: >-
+      jupyter nbconvert --execute --no-input --to html
+      --output docs/evaluate.html notebooks/evaluate.ipynb
+    deps:
+    - data/metrics.json
+    outs:
+    - docs/evaluate.html

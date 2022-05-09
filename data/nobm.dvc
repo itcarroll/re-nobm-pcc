@@ -2,4 +2,4 @@ outs:
 - md5: 311c67999373af7bcf996c1833ae5dff.dir
   size: 1727710729
   nfiles: 13
-  path: data
+  path: nobm

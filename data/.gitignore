@@ -1,0 +1,8 @@
+/train
+/validate
+/test
+/model
+/fit.npz
+/metrics.json
+/nobm
+/sample.nc

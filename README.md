@@ -26,11 +26,18 @@ during the subsequent step are presently unavoidable (see
 [iterative/dvc#447][6]).
     1. Within the activated python environment, execute `dvc pull` and follow
     the instructions.
-1. Place associated Google Collab [notebooks][7] in Google Drive under
+1. Place associated Google Colab [notebooks][7] in Google Drive under
 `PCC-ML/colab-nobm`. Generally, a notebook needs to connect to a local kernel to
 run. Configure (one time only) and launch a Jupyter server to enable.
     1. `jupyter serverextension enable --py jupyter_http_over_ws`
     1. `jupyter lab --NotebookApp.allow_origin='https://colab.research.google.com'`
+
+## Reproducing
+
+1. `pushd oasim && make && make install && popd`
+1. on machine with beegfs access `dvc repro nobm`
+1. ?? on slurm `dvc repro oasim` ??
+2. ?? on gpu node `dvc repro train` ??
 
 ## Acknowledgements
 

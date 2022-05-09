@@ -1,23 +1,83 @@
 schema: '2.0'
 stages:
-  perceptron:
-    cmd: python -m re_nobm_pcc.perceptron
+  preprocess:
+    cmd: python -m re_nobm_pcc.preprocess
     deps:
-    - path: data
+    - path: data/nobm
       md5: 311c67999373af7bcf996c1833ae5dff.dir
       size: 1727710729
       nfiles: 13
     - path: re_nobm_pcc/kit.py
-      md5: ccc8b87ddd00cb6f343c1e349446386c
-      size: 72
-    - path: re_nobm_pcc/perceptron.py
-      md5: 052adba8179a6aea6279a098bf53538f
-      size: 3163
-    - path: re_nobm_pcc/preprocessing.py
-      md5: ef3230d61ff0946e982304b66a68edb5
-      size: 1907
+      md5: c7a41dca524640c0383d5e8295c6ff4a
+      size: 1552
+    - path: re_nobm_pcc/preprocess.py
+      md5: 07ac1fe66a73838fb44e2b4660c6d962
+      size: 2495
     outs:
-    - path: models/logs/perceptron
-      md5: 14c7d0f12405a4954c7edfe958ccfa4a.dir
-      size: 12871
+    - path: data/sample.nc
+      md5: 86f0bd82d3aff4a4ddf5c11ead6315bf
+      size: 2165778
+    - path: data/test
+      md5: c328fd65b8fa954a5e060b7c8d2169a2.dir
+      size: 211775935
+      nfiles: 3
+    - path: data/train
+      md5: dc0ad8bd43f401b1666d02ceb47c52bb.dir
+      size: 637351653
+      nfiles: 3
+    - path: data/validate
+      md5: 4c29cb7398c726ad0384c4e71da35e59.dir
+      size: 212575968
+      nfiles: 3
+  preview:
+    cmd: jupyter nbconvert docs/preview.ipynb --execute --no-input --to html
+    deps:
+    - path: data/nobm
+      md5: 311c67999373af7bcf996c1833ae5dff.dir
+      size: 1727710729
+      nfiles: 13
+    - path: docs/preview.ipynb
+      md5: c9961ae4597105ceec8236c955e4edd1
+      size: 10607548
+    - path: re_nobm_pcc/kit.py
+      md5: c7a41dca524640c0383d5e8295c6ff4a
+      size: 1552
+    - path: re_nobm_pcc/preprocess.py
+      md5: 07ac1fe66a73838fb44e2b4660c6d962
+      size: 2495
+    outs:
+    - path: docs/preview.html
+      md5: e72e57b37b4576c175fc6e325de597af
+      size: 7224307
+  learn:
+    cmd: python -m re_nobm_pcc.learn
+    deps:
+    - path: data/test
+      md5: c328fd65b8fa954a5e060b7c8d2169a2.dir
+      size: 211775935
+      nfiles: 3
+    - path: data/train
+      md5: dc0ad8bd43f401b1666d02ceb47c52bb.dir
+      size: 637351653
+      nfiles: 3
+    - path: data/validate
+      md5: 4c29cb7398c726ad0384c4e71da35e59.dir
+      size: 212575968
+      nfiles: 3
+    - path: re_nobm_pcc/kit.py
+      md5: c7a41dca524640c0383d5e8295c6ff4a
+      size: 1552
+    - path: re_nobm_pcc/learn.py
+      md5: 24e762db4d1fbd898a70fedfb8775d03
+      size: 1836
+    outs:
+    - path: data/fit.npz
+      md5: 9df3a9aabb787935977f79a771839684
+      size: 800
+    - path: data/metrics.json
+      md5: 5b641401b735aaecae5a815790c8ebae
+      size: 56
+    - path: data/model
+      md5: cdb5c6db4665c11c266dca3da17fc571.dir
+      size: 166616
       nfiles: 4
