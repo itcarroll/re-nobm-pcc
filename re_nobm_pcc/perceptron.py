@@ -40,7 +40,7 @@ class Full(tf.keras.Model):
             callbacks=[
                 tf.keras.callbacks.EarlyStopping(
                     monitor='val_loss',
-                    patience=100,
+                    patience=32,
                 ),
                 tf.keras.callbacks.TensorBoard(TENSORBOARD_LOGS_DIR/'full'),
             ],
