@@ -4,5 +4,5 @@
 /model
 /fit.npz
 /metrics.json
-/nobm
 /sample.nc
+/nobm
