@@ -1,10 +1,23 @@
 stages:
   oasim:
-    # generate corresponding lwn files
-    # want to do in parallel, but also ...
-    # foreach to allow re-using
-    # oasim currently gitignored
-    cmd: TODO
+    # generate corresponding lwn files for each nobm file
+    # TODO study /usr/bin/time -v and improve efficiency
+    cmd:
+      sbatch
+        --job-name=oasim
+        --array=0-17%6
+        --cpus-per-task=128
+        --exclusive
+        --wrap="python -m re_nobm_pcc.phy2lwn"
+        &&
+      mkdir data/oasim
+    deps:
+    - data/nobm
+    - data/oasim_param
+    - re_nobm_pcc/phy2lwn.py
+    - oasim
+    outs:
+    - data/oasim
   preprocess:
     # prepare the features and labels for model training
     # on gpu for tf analysis?
@@ -20,9 +33,12 @@ stages:
     - data/sample.nc
   preview:
     # generate report on the features and labels
-    cmd: >-
-      jupyter nbconvert --execute --no-input --to html
-      --output docs/preview.html notebooks/preview.ipynb
+    cmd: jupyter nbconvert
+      --execute
+      --no-input
+      --to html
+      --output docs/preview.html
+      notebooks/preview.ipynb
     deps:
     - data/nobm
     - re_nobm_pcc/kit.py
