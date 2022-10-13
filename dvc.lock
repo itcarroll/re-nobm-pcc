@@ -81,3 +81,27 @@ stages:
       md5: cdb5c6db4665c11c266dca3da17fc571.dir
       size: 166616
       nfiles: 4
+  oasim:
+    cmd: sbatch --job-name=oasim --array=0-17%6 --cpus-per-task=128 --exclusive --wrap="python
+      -m re_nobm_pcc.phy2lwn" && mkdir data/oasim
+    deps:
+    - path: data/nobm
+      md5: 882a5280d90093255f33630c28588fad.dir
+      size: 16074438024
+      nfiles: 6592
+    - path: data/oasim_param
+      md5: c939bea20fb7fd7368f0c9192da5b622.dir
+      size: 1522942
+      nfiles: 15
+    - path: oasim
+      md5: 87469d877bc71e08c49c1bd0be833e34.dir
+      size: 232562
+      nfiles: 24
+    - path: re_nobm_pcc/phy2lwn.py
+      md5: 38db3e723ef55c331346d845f864a9ed
+      size: 3464
+    outs:
+    - path: data/oasim
+      md5: d751713988987e9331980363e24189ce.dir
+      size: 0
+      nfiles: 0
