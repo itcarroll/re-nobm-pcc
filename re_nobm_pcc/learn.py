@@ -2,42 +2,46 @@ import json
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 
-from .kit import DATA_DIR
+from .kit import DATA_DIR, TAXA
 
 
 BATCH = 256
-EPOCHS = 2
-
-
-class PCC(tf.keras.Model):
-
-    def __init__(self):
-        super().__init__()
-        self._layers = (
-                tf.keras.layers.Dense(units=16, activation=tf.nn.relu),
-                tf.keras.layers.Dense(units=4),
-            )
-
-    def call(self, inputs):
-        outputs = inputs
-        for item in self._layers:
-            outputs = item(outputs)
-        return outputs
+LEARNING_RATE = 0.001
+EPOCHS = 500
 
 
 if __name__ == '__main__':
     ## load datasets
     # TODO does batching the validate and test Datasets hit performance?
-    train = tf.data.experimental.load(str(DATA_DIR/'train')).batch(BATCH)
-    validate = tf.data.experimental.load(str(DATA_DIR/'validate')).batch(BATCH)
-    test = tf.data.experimental.load(str(DATA_DIR/'test')).batch(BATCH)
-    ## compile model
-    model = PCC()
+    train = (
+        tf.data.Dataset.load(str(DATA_DIR/'train'))
+        .shuffle(10*BATCH)
+        .batch(BATCH)
+    )
+    validate = tf.data.Dataset.load(str(DATA_DIR/'validate'))
+    validate = validate.batch(validate.cardinality())
+    test = tf.data.Dataset.load(str(DATA_DIR/'test'))
+    test = test.batch(test.cardinality())
+    ## compute loss weights
+    # TODO why doesn't Normalization work?
+    _, y = next(test.as_numpy_iterator())
+    y = np.stack(y, axis=1)
+    weights = (1/y.mean(axis=0)).tolist()
+    ## build model
+    x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
+    y = tf.keras.layers.Dense(units=32, activation='relu')(x)
+    y = [
+        tf.keras.layers.Dense(units=1, activation='exponential', name=i)(y)
+        for i in TAXA
+    ]
+    model = tf.keras.Model(inputs=[x], outputs=y)
     model.compile(
-        optimizer=tf.optimizers.Adam(learning_rate=0.001),
-        loss=tf.keras.losses.MeanSquaredError(),
-        run_eagerly=True, # DEBUG
+        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss=tf.keras.losses.MeanAbsoluteError(),
+        loss_weights=weights,
+        # run_eagerly=True, # DEBUG
     )
     ## fit and save
     fit = model.fit(
@@ -46,7 +50,7 @@ if __name__ == '__main__':
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                patience=10,
+                patience=20,
             ),
         ],
         validation_data=validate,
@@ -54,16 +58,25 @@ if __name__ == '__main__':
     model.save(str(DATA_DIR/'model'))
     np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
     ## write evaluation metrics
-    # TODO residuals
     model.compile(
-        loss=tf.keras.losses.MeanSquaredError(),
         metrics=[
-            tf.keras.metrics.MeanAbsoluteError(),
-            # TODO R2
+            tf.keras.metrics.MeanMetricWrapper(
+                fn=lambda y_true, y_pred: y_pred - y_true,
+                name='ME',
+            ),
+            tf.keras.metrics.MeanAbsoluteError(name='MAE'),
+            tf.keras.metrics.RootMeanSquaredError(name='RMSE'),
+            tfa.metrics.RSquare(name='R2'),
         ],
     )
+    metrics = model.evaluate(test)
     metrics = {
-        k: v for k, v in zip(['MSE', 'MAE'], model.evaluate(test))
+        k.name: v for k, v in zip(model.metrics, metrics)
     }
-    with open(DATA_DIR/'metrics.json', 'w') as stream:
+    with (DATA_DIR/'metrics.json').open('w') as stream:
         json.dump(metrics, stream)
+
+
+# HERE
+# all four y
+# R2

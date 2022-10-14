@@ -1,83 +1,103 @@
 schema: '2.0'
 stages:
   preprocess:
-    cmd: python -m re_nobm_pcc.preprocess
+    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.preprocess
     deps:
     - path: data/nobm
       md5: 311c67999373af7bcf996c1833ae5dff.dir
       size: 1727710729
       nfiles: 13
     - path: re_nobm_pcc/kit.py
-      md5: c7a41dca524640c0383d5e8295c6ff4a
-      size: 1552
+      md5: 99ef1f4ef25197e1c2723c3b7527b31c
+      size: 1588
     - path: re_nobm_pcc/preprocess.py
-      md5: 07ac1fe66a73838fb44e2b4660c6d962
-      size: 2495
+      md5: 73f7ef989da48e89409d5bfe0d222f59
+      size: 2756
     outs:
     - path: data/sample.nc
-      md5: 86f0bd82d3aff4a4ddf5c11ead6315bf
-      size: 2165778
+      md5: 153fe92c65f4ab026064b382f3aef201
+      size: 2165615
     - path: data/test
-      md5: c328fd65b8fa954a5e060b7c8d2169a2.dir
-      size: 211775935
+      md5: c6a9487799da56185bbb4aa7de33557e.dir
+      size: 217815572
       nfiles: 3
     - path: data/train
-      md5: dc0ad8bd43f401b1666d02ceb47c52bb.dir
-      size: 637351653
+      md5: aeda6e5bd4ecbc91688ce07d2ccac46b.dir
+      size: 655528224
       nfiles: 3
     - path: data/validate
-      md5: 4c29cb7398c726ad0384c4e71da35e59.dir
-      size: 212575968
+      md5: e74b902e3641157c1b72f8c2162e7cb3.dir
+      size: 218638421
       nfiles: 3
   preview:
-    cmd: jupyter nbconvert docs/preview.ipynb --execute --no-input --to html
+    cmd: jupyter nbconvert --execute --no-input --to html --output preview.html notebooks/preview.ipynb
     deps:
     - path: data/nobm
       md5: 311c67999373af7bcf996c1833ae5dff.dir
       size: 1727710729
       nfiles: 13
-    - path: docs/preview.ipynb
-      md5: c9961ae4597105ceec8236c955e4edd1
-      size: 10607548
+    - path: notebooks/preview.ipynb
+      md5: e9a356e89549c7e472add9da95578e51
+      size: 7543543
     - path: re_nobm_pcc/kit.py
       md5: c7a41dca524640c0383d5e8295c6ff4a
       size: 1552
     - path: re_nobm_pcc/preprocess.py
-      md5: 07ac1fe66a73838fb44e2b4660c6d962
-      size: 2495
+      md5: 87c0c4e17fda701f38da439588ee84ec
+      size: 2592
     outs:
-    - path: docs/preview.html
-      md5: e72e57b37b4576c175fc6e325de597af
-      size: 7224307
+    - path: notebooks/preview.html
+      md5: 0717431e54023af6ceac5602807dc4a1
+      size: 7233222
   learn:
-    cmd: python -m re_nobm_pcc.learn
+    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.learn
     deps:
     - path: data/test
-      md5: c328fd65b8fa954a5e060b7c8d2169a2.dir
-      size: 211775935
+      md5: c6a9487799da56185bbb4aa7de33557e.dir
+      size: 217815572
       nfiles: 3
     - path: data/train
-      md5: dc0ad8bd43f401b1666d02ceb47c52bb.dir
-      size: 637351653
+      md5: aeda6e5bd4ecbc91688ce07d2ccac46b.dir
+      size: 655528224
       nfiles: 3
     - path: data/validate
-      md5: 4c29cb7398c726ad0384c4e71da35e59.dir
-      size: 212575968
+      md5: e74b902e3641157c1b72f8c2162e7cb3.dir
+      size: 218638421
       nfiles: 3
     - path: re_nobm_pcc/kit.py
-      md5: c7a41dca524640c0383d5e8295c6ff4a
-      size: 1552
+      md5: 99ef1f4ef25197e1c2723c3b7527b31c
+      size: 1588
     - path: re_nobm_pcc/learn.py
-      md5: 24e762db4d1fbd898a70fedfb8775d03
-      size: 1836
+      md5: 73349ad5ce19e631e142188f32849e52
+      size: 2339
     outs:
     - path: data/fit.npz
-      md5: 9df3a9aabb787935977f79a771839684
-      size: 800
+      md5: eeba03e76d5cbf1822b8a1b4aee06ce1
+      size: 12624
     - path: data/metrics.json
-      md5: 5b641401b735aaecae5a815790c8ebae
-      size: 56
+      md5: acb6c8a3f8638067758238edf06b99c1
+      size: 533
     - path: data/model
-      md5: cdb5c6db4665c11c266dca3da17fc571.dir
-      size: 166616
+      md5: 4daf6b3fac25961e27e9b1064154a0b2.dir
+      size: 369379
       nfiles: 4
+  evaluate:
+    cmd: jupyter nbconvert --execute --no-input --to html --output evaluate.html notebooks/evaluate.ipynb
+    deps:
+    - path: data/fit.npz
+      md5: eeba03e76d5cbf1822b8a1b4aee06ce1
+      size: 12624
+    - path: data/metrics.json
+      md5: acb6c8a3f8638067758238edf06b99c1
+      size: 533
+    - path: data/model
+      md5: 4daf6b3fac25961e27e9b1064154a0b2.dir
+      size: 369379
+      nfiles: 4
+    - path: notebooks/evaluate.ipynb
+      md5: 19f15bf8d80f0893188f48e682a24a37
+      size: 7750482
+    outs:
+    - path: notebooks/evaluate.html
+      md5: 55c814489e7196b0471132880d5439bd
+      size: 4458786
