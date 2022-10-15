@@ -11,23 +11,23 @@ stages:
       md5: 99ef1f4ef25197e1c2723c3b7527b31c
       size: 1588
     - path: re_nobm_pcc/preprocess.py
-      md5: 73f7ef989da48e89409d5bfe0d222f59
-      size: 2756
+      md5: 519b38081d6b9dd064ac54cd98120d83
+      size: 2789
     outs:
     - path: data/sample.nc
-      md5: 153fe92c65f4ab026064b382f3aef201
+      md5: 95bf441fb1a7d47bb1f4a4c0567335dc
       size: 2165615
     - path: data/test
-      md5: c6a9487799da56185bbb4aa7de33557e.dir
-      size: 217815572
+      md5: e2b1188d1aa39fcac0a8103ef1d3a791.dir
+      size: 218205228
       nfiles: 3
     - path: data/train
-      md5: aeda6e5bd4ecbc91688ce07d2ccac46b.dir
-      size: 655528224
+      md5: 1d84a9cdbe20020e0de83fededf9baaa.dir
+      size: 656700909
       nfiles: 3
     - path: data/validate
-      md5: e74b902e3641157c1b72f8c2162e7cb3.dir
-      size: 218638421
+      md5: f2bc5107223feb1315599a1b389efb0f.dir
+      size: 219029548
       nfiles: 3
   preview:
     cmd: jupyter nbconvert --execute --no-input --to html --output preview.html notebooks/preview.ipynb
@@ -53,51 +53,51 @@ stages:
     cmd: srun --gres=gpu:1 python -m re_nobm_pcc.learn
     deps:
     - path: data/test
-      md5: c6a9487799da56185bbb4aa7de33557e.dir
-      size: 217815572
+      md5: e2b1188d1aa39fcac0a8103ef1d3a791.dir
+      size: 218205228
       nfiles: 3
     - path: data/train
-      md5: aeda6e5bd4ecbc91688ce07d2ccac46b.dir
-      size: 655528224
+      md5: 1d84a9cdbe20020e0de83fededf9baaa.dir
+      size: 656700909
       nfiles: 3
     - path: data/validate
-      md5: e74b902e3641157c1b72f8c2162e7cb3.dir
-      size: 218638421
+      md5: f2bc5107223feb1315599a1b389efb0f.dir
+      size: 219029548
       nfiles: 3
     - path: re_nobm_pcc/kit.py
       md5: 99ef1f4ef25197e1c2723c3b7527b31c
       size: 1588
     - path: re_nobm_pcc/learn.py
-      md5: 3e79d43dc8b49b185eb976e9a80af652
-      size: 2339
+      md5: df879c1c33cdb24e96ef7ca2b7a53f19
+      size: 2736
     outs:
     - path: data/fit.npz
-      md5: bc2be2a2d9f90ec9a992d0f66456612f
-      size: 23536
+      md5: f7af0b147decb1b86cbcfde16464ef20
+      size: 12008
     - path: data/metrics.json
-      md5: 296285da2002641f3b30d4d1cd8e2bcb
+      md5: 773dbe346a45a4d799fc08a884a35088
       size: 528
     - path: data/model
-      md5: c38f305b36ee66a301a3d90676ab4e52.dir
-      size: 573483
+      md5: 5995db8f30d5226f601a00a9b9aaa326.dir
+      size: 566610
       nfiles: 4
   evaluate:
     cmd: jupyter nbconvert --execute --no-input --to html --output evaluate.html notebooks/evaluate.ipynb
     deps:
     - path: data/fit.npz
-      md5: bc2be2a2d9f90ec9a992d0f66456612f
-      size: 23536
+      md5: f7af0b147decb1b86cbcfde16464ef20
+      size: 12008
     - path: data/metrics.json
-      md5: 296285da2002641f3b30d4d1cd8e2bcb
+      md5: 773dbe346a45a4d799fc08a884a35088
       size: 528
     - path: data/model
-      md5: c38f305b36ee66a301a3d90676ab4e52.dir
-      size: 573483
+      md5: 5995db8f30d5226f601a00a9b9aaa326.dir
+      size: 566610
       nfiles: 4
     - path: notebooks/evaluate.ipynb
-      md5: 19f15bf8d80f0893188f48e682a24a37
-      size: 7750482
+      md5: 4c89c42e97a95efb0899af5413046678
+      size: 7747698
     outs:
     - path: notebooks/evaluate.html
-      md5: e2a9a4fc29fd213a100bf4be75edcbed
-      size: 4473558
+      md5: ddce3cef097fee3afd2100858540d7ea
+      size: 4474562
