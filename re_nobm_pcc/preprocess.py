@@ -84,7 +84,7 @@ if __name__ == '__main__':
     )
     for k, v in dataset.groupby(split):
         ds = tf.data.Dataset.from_tensor_slices((
-            v['features'],
+            v['features'].expand_dims('features', axis=-1),
             # v['labels'], # TODO multivariate output rather than multiple outputs
             tuple(v[i] for i in TAXA),
         ))

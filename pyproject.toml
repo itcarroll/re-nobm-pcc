@@ -8,14 +8,14 @@ packages = [{include = "re_nobm_pcc"}]
 [tool.poetry.dependencies]
 python = "^3.8,<3.11"
 scipy = "^1.8.1"
-tensorflow = "^2.8.0"
 xarray = {extras = ["parallel"], version = "^2022.6.0"}
+# pip install --no-binary netcdf4 netcdf4
 hvplot = "^0.8.1"
 dvc = {version = "^2.9.5", extras = ["gdrive"]}
 jupyterlab = "^3.2.9"
 pytest = "^7.0.1"
-# pip install --no-binary netCDF4 netCDF4
 tensorflow-addons = "^0.18.0"
+tensorflow-cpu = "^2.10.0"
 
 [build-system]
 requires = ["poetry-core"]

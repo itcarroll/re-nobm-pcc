@@ -7,7 +7,7 @@ import tensorflow_addons as tfa
 from .kit import DATA_DIR, TAXA
 
 
-BATCH = 256
+BATCH = 128
 LEARNING_RATE = 0.001
 EPOCHS = 500
 
@@ -31,7 +31,16 @@ if __name__ == '__main__':
     weights = (1/y.mean(axis=0)).tolist()
     ## build model
     x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
-    y = tf.keras.layers.Dense(units=64, activation='relu')(x)
+    y = tf.keras.layers.Normalization()
+    y.adapt(train.map(lambda x, _: x))
+    y = y(x)
+    y = tf.keras.layers.Conv1D(filters=16, kernel_size=7, activation='relu')(y)
+    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Conv1D(filters=16, kernel_size=5, activation='relu')(y)
+    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(y)
+    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Dense(units=64, activation='relu')(y)
     y = [
         tf.keras.layers.Dense(units=1, activation='exponential', name=i)(y)
         for i in TAXA
@@ -50,7 +59,7 @@ if __name__ == '__main__':
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                patience=50,
+                patience=5,
             ),
         ],
         validation_data=validate,

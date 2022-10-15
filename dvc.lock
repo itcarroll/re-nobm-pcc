@@ -1,7 +1,7 @@
 schema: '2.0'
 stages:
   preprocess:
-    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.preprocess
+    cmd: srun python -m re_nobm_pcc.preprocess
     deps:
     - path: data/nobm
       md5: 311c67999373af7bcf996c1833ae5dff.dir
@@ -11,23 +11,23 @@ stages:
       md5: 99ef1f4ef25197e1c2723c3b7527b31c
       size: 1588
     - path: re_nobm_pcc/preprocess.py
-      md5: 73f7ef989da48e89409d5bfe0d222f59
-      size: 2756
+      md5: 519b38081d6b9dd064ac54cd98120d83
+      size: 2789
     outs:
     - path: data/sample.nc
-      md5: 153fe92c65f4ab026064b382f3aef201
+      md5: 7341cbfa20104bcb2033fc795faaa9b1
       size: 2165615
     - path: data/test
-      md5: c6a9487799da56185bbb4aa7de33557e.dir
-      size: 217815572
+      md5: 75755dade6db1265ff3864d1ef1152c9.dir
+      size: 218205229
       nfiles: 3
     - path: data/train
-      md5: aeda6e5bd4ecbc91688ce07d2ccac46b.dir
-      size: 655528224
+      md5: 4dd4e13e24210fa207d6d271800e9dc0.dir
+      size: 656700908
       nfiles: 3
     - path: data/validate
-      md5: e74b902e3641157c1b72f8c2162e7cb3.dir
-      size: 218638421
+      md5: 04596eac06f73f5248c8d72b9653b372.dir
+      size: 219029548
       nfiles: 3
   preview:
     cmd: jupyter nbconvert --execute --no-input --to html --output preview.html notebooks/preview.ipynb

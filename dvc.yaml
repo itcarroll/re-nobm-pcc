@@ -2,7 +2,7 @@ stages:
   preprocess:
     # prepare the features and labels for model training
     # on gpu for tf analysis?
-    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.preprocess
+    cmd: srun python -m re_nobm_pcc.preprocess
     deps:
     - data/nobm
     - re_nobm_pcc/kit.py
@@ -30,7 +30,7 @@ stages:
     frozen: true
   learn:
     # train the model
-    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.learn
+    cmd: srun python -m re_nobm_pcc.learn
     deps:
     - data/train
     - data/validate
