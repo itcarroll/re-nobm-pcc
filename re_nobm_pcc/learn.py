@@ -31,7 +31,7 @@ if __name__ == '__main__':
     weights = (1/y.mean(axis=0)).tolist()
     ## build model
     x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
-    y = tf.keras.layers.Dense(units=32, activation='relu')(x)
+    y = tf.keras.layers.Dense(units=64, activation='relu')(x)
     y = [
         tf.keras.layers.Dense(units=1, activation='exponential', name=i)(y)
         for i in TAXA
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                patience=20,
+                patience=50,
             ),
         ],
         validation_data=validate,
@@ -75,8 +75,3 @@ if __name__ == '__main__':
     }
     with (DATA_DIR/'metrics.json').open('w') as stream:
         json.dump(metrics, stream)
-
-
-# HERE
-# all four y
-# R2
