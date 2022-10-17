@@ -15,7 +15,7 @@ dvc = {version = "^2.9.5", extras = ["gdrive"]}
 jupyterlab = "^3.2.9"
 pytest = "^7.0.1"
 tensorflow-addons = "^0.18.0"
-tensorflow-cpu = "^2.10.0"
+tensorflow = "^2.10.0"
 
 [build-system]
 requires = ["poetry-core"]

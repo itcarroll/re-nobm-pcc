@@ -7,23 +7,22 @@ import tensorflow_addons as tfa
 from .kit import DATA_DIR, TAXA
 
 
-BATCH = 128
+BATCH = 256
 LEARNING_RATE = 0.001
 EPOCHS = 500
 
 
 if __name__ == '__main__':
     ## load datasets
-    # TODO does batching the validate and test Datasets hit performance?
     train = (
         tf.data.Dataset.load(str(DATA_DIR/'train'))
-        .shuffle(10*BATCH)
+        .shuffle(8*BATCH)
         .batch(BATCH)
     )
     validate = tf.data.Dataset.load(str(DATA_DIR/'validate'))
-    validate = validate.batch(validate.cardinality())
+    validate = validate.batch(BATCH)
     test = tf.data.Dataset.load(str(DATA_DIR/'test'))
-    test = test.batch(test.cardinality())
+    test = test.batch(BATCH)
     ## compute loss weights
     # TODO why doesn't Normalization work?
     _, y = next(test.as_numpy_iterator())
@@ -40,6 +39,7 @@ if __name__ == '__main__':
     y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
     y = tf.keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(y)
     y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Flatten()(y)
     y = tf.keras.layers.Dense(units=64, activation='relu')(y)
     y = [
         tf.keras.layers.Dense(units=1, activation='exponential', name=i)(y)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                patience=5,
+                patience=50,
             ),
         ],
         validation_data=validate,
