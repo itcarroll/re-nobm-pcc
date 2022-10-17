@@ -11,23 +11,23 @@ stages:
       md5: 99ef1f4ef25197e1c2723c3b7527b31c
       size: 1588
     - path: re_nobm_pcc/preprocess.py
-      md5: 519b38081d6b9dd064ac54cd98120d83
-      size: 2789
+      md5: 73f7ef989da48e89409d5bfe0d222f59
+      size: 2756
     outs:
     - path: data/sample.nc
-      md5: 95bf441fb1a7d47bb1f4a4c0567335dc
+      md5: 153fe92c65f4ab026064b382f3aef201
       size: 2165615
     - path: data/test
-      md5: e2b1188d1aa39fcac0a8103ef1d3a791.dir
-      size: 218205228
+      md5: c6a9487799da56185bbb4aa7de33557e.dir
+      size: 217815572
       nfiles: 3
     - path: data/train
-      md5: 1d84a9cdbe20020e0de83fededf9baaa.dir
-      size: 656700909
+      md5: aeda6e5bd4ecbc91688ce07d2ccac46b.dir
+      size: 655528224
       nfiles: 3
     - path: data/validate
-      md5: f2bc5107223feb1315599a1b389efb0f.dir
-      size: 219029548
+      md5: e74b902e3641157c1b72f8c2162e7cb3.dir
+      size: 218638421
       nfiles: 3
   preview:
     cmd: jupyter nbconvert --execute --no-input --to html --output preview.html notebooks/preview.ipynb
