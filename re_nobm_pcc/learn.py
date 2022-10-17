@@ -33,13 +33,6 @@ if __name__ == '__main__':
     y = tf.keras.layers.Normalization()
     y.adapt(train.map(lambda x, _: x))
     y = y(x)
-    y = tf.keras.layers.Conv1D(filters=16, kernel_size=7, activation='relu')(y)
-    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
-    y = tf.keras.layers.Conv1D(filters=16, kernel_size=5, activation='relu')(y)
-    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
-    y = tf.keras.layers.Conv1D(filters=16, kernel_size=3, activation='relu')(y)
-    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
-    y = tf.keras.layers.Flatten()(y)
     y = tf.keras.layers.Dense(units=64, activation='relu')(y)
     y = [
         tf.keras.layers.Dense(units=1, activation='exponential', name=i)(y)
