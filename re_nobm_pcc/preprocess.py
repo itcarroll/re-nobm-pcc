@@ -8,6 +8,9 @@ from .kit import DATA_DIR, TAXA
 rng = np.random.default_rng(seed=7033760348669894684)
 num = 1000
 
+# TODO expert, taxa specific thresholds
+PRESENT_ABOVE = 10e-6
+
 PhytoChl = (
     xr.open_mfdataset(
         DATA_DIR.glob('nobm/monthly/mon2007*.R2014.nc4'),
@@ -83,9 +86,13 @@ if __name__ == '__main__':
         dims='pxl',
     )
     for k, v in dataset.groupby(split):
+        idx = v > PRESENT_ABOVE
         ds = tf.data.Dataset.from_tensor_slices((
+            # TODO multivariate output rather than multiple outputs
             v['features'],
-            # v['labels'], # TODO multivariate output rather than multiple outputs
-            tuple(v[i] for i in TAXA),
+            dict(
+                **{f'presence_{i}': idx[i] for i in TAXA},
+                **{f'abundance_{i}': v[i].where(idx[i], 0.0) for i in TAXA},
+            )
         ))
         ds.save(str(DATA_DIR/k))
