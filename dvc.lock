@@ -72,32 +72,32 @@ stages:
       size: 4115
     outs:
     - path: data/fit.npz
-      md5: f310914f8e22f07bd7edcaee8019895a
-      size: 18160
+      md5: 5eb24fdad16af15f82cfee2633f5d363
+      size: 41416
     - path: data/metrics.json
-      md5: 8a4194640af3e7a8523520e8658c4809
-      size: 703
+      md5: 5b993c86775bfe44f9e69f4cecf11487
+      size: 717
     - path: data/model
-      md5: 2037ed6d50c58dffc59909d617f35e21.dir
+      md5: 8dbb1b0043823c827fe5a1f293bfc9b3.dir
       size: 880085
       nfiles: 4
   evaluate:
     cmd: jupyter nbconvert --execute --no-input --to html --output evaluate.html notebooks/evaluate.ipynb
     deps:
     - path: data/fit.npz
-      md5: f310914f8e22f07bd7edcaee8019895a
-      size: 18160
+      md5: 5eb24fdad16af15f82cfee2633f5d363
+      size: 41416
     - path: data/metrics.json
-      md5: 8a4194640af3e7a8523520e8658c4809
-      size: 703
+      md5: 5b993c86775bfe44f9e69f4cecf11487
+      size: 717
     - path: data/model
-      md5: 2037ed6d50c58dffc59909d617f35e21.dir
+      md5: 8dbb1b0043823c827fe5a1f293bfc9b3.dir
       size: 880085
       nfiles: 4
     - path: notebooks/evaluate.ipynb
-      md5: d2b010ec80a04746523b378e1d5c27bb
-      size: 7699597
+      md5: 85a35ac63add29a8cb9587d177df7f8a
+      size: 7700104
     outs:
     - path: notebooks/evaluate.html
-      md5: b7cc11d2483491e82c6704be8c5a752f
-      size: 4393440
+      md5: c471f4a850f60df38a2a3909716fdcbe
+      size: 4412937
