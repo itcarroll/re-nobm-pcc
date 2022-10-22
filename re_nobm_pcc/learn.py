@@ -1,3 +1,4 @@
+from cmath import isnan
 import json
 
 import numpy as np
@@ -13,12 +14,10 @@ LEARNING_RATE = 0.001
 PRESENCE_PREDICTION_THRESHOLD = 0.0
 
 
-class Truncated_MAE(tf.keras.losses.MeanAbsoluteError):
-    def __init__(self):
-        super().__init__()
-    def call(self, y_true, y_pred):
-        idx = y_true > 0.0
-        return super().call(y_true[idx], y_pred[idx])
+class MAEofPresent(tf.keras.losses.MeanAbsoluteError):
+    def __call__(self, y, y_hat, sample_weight=None):
+        w = tf.stop_gradient(tf.math.sigmoid(y_hat[:, 1]))
+        return super(MAEofPresent, self).__call__(y, y_hat[:, :1], w)
 
 
 if __name__ == '__main__':
@@ -38,28 +37,33 @@ if __name__ == '__main__':
     # y = np.concatenate(y, axis=1)
     # weights = (1/y.mean(axis=1)).tolist()
     ## build model
+    # single input with normalization
     x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
     y = tf.keras.layers.Normalization()
     y.adapt(train.map(lambda x, _: x))
     y = y(x)
-    y = tf.keras.layers.Dense(64, 'relu')(y)
-    y = tf.keras.layers.Dense(64, 'relu')(y)
-    y = tf.keras.layers.Dense(64, 'relu')(y)
+    # sequential layers
+    y = tf.keras.layers.Dense(128, 'swish')(y)
+    # multiple outputs for 1) different taxa and 2) presence and abundance
     outputs = []
     compile_kwargs = {
         'loss': {},
         # 'loss_weights': {}, # FIXME weights
     }
     for i, item in enumerate(TAXA):
+        # name must match keys in tf.data.Dataset
         name = f'presence_{item}'
-        outputs.append(tf.keras.layers.Dense(1, name=name)(y))
+        y_presence = tf.keras.layers.Dense(1, activation='linear', name=name)(y)
+        outputs.append(y_presence)
         compile_kwargs['loss'][name] = tf.keras.losses.BinaryCrossentropy(
             from_logits=True,
         )
         # compile_kwargs['loss_weights'][name] = weights[i] # FIXME weights
         name = f'abundance_{item}'
-        outputs.append(tf.keras.layers.Dense(1, 'exponential', name=name)(y))
-        compile_kwargs['loss'][name] = Truncated_MAE()
+        y_abundance = tf.keras.layers.Dense(1, activation='softplus')(y)
+        y = tf.keras.layers.Concatenate(name=name)([y_abundance, y_presence])
+        outputs.append(y)
+        compile_kwargs['loss'][name] = MAEofPresent()
         # compile_kwargs['loss_weights'][name] = weights[i] #FIXME weights
     model = tf.keras.Model(inputs=[x], outputs=outputs)
     model.compile(
@@ -81,18 +85,26 @@ if __name__ == '__main__':
     )
     model.save(str(DATA_DIR/'model'))
     np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
-    ## build abundance model for evaluation only
+    ## add metrics to evaluate on test
+    model.compile(
+        metrics={
+            f'presence_{i}': tf.keras.metrics.AUC(name='AUC')
+            for i in TAXA
+        },
+        **compile_kwargs,
+    )
+    ## build abundance model for test evaluation only
     outputs = {i.node.layer.name: i for i in model.outputs}
     abundance_outputs = []
     for item in TAXA:
         abundance_outputs.append(
-            # presence (as 0 or 1) times abundance
-            tf.keras.layers.Multiply(name=item)([
+            # presence (as 0 or 1) * abundance
+            tf.keras.layers.Multiply(name=f'product_{item}')([
                 tf.cast(
                     outputs[f'presence_{item}'] > PRESENCE_PREDICTION_THRESHOLD,
                     tf.float32,
                 ),
-                outputs[f'abundance_{item}'],
+                outputs[f'abundance_{item}'][:, :1],
             ])
         )
     abundance_model = tf.keras.Model(
@@ -111,16 +123,16 @@ if __name__ == '__main__':
         ],
     )
     ## calculate metrics and write to json
-    loss = model.evaluate(test)
-    metrics = abundance_model.evaluate(
+    abundance_metrics = abundance_model.evaluate(
         test.map(lambda x, y: (x, {
-            k.replace('abundance_', ''): v
+            k.replace('abundance', 'product'): v
             for k, v in y.items() if k.startswith('abundance')
         }))
     )
-    metrics = {
-        k.name: v for k, v in zip(abundance_model.metrics, metrics)
+    all_metrics = {
+        k.name: v for k, v in zip(abundance_model.metrics, abundance_metrics)
     }
-    metrics['loss'] = loss
+    metrics = model.evaluate(test)
+    all_metrics.update({k.name: v for k, v in zip(model.metrics, metrics)})
     with (DATA_DIR/'metrics.json').open('w') as stream:
-        json.dump(metrics, stream)
+        json.dump(all_metrics, stream)
