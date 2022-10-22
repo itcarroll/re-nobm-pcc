@@ -91,7 +91,6 @@ if __name__ == '__main__':
             # TODO multivariate output rather than multiple outputs
             v['features'],
             dict(
-                **{f'presence_{i}': idx[i] for i in TAXA},
                 **{f'abundance_{i}': v[i].where(idx[i], 0.0) for i in TAXA},
             )
         ))
