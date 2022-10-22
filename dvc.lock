@@ -85,19 +85,19 @@ stages:
     cmd: jupyter nbconvert --execute --no-input --to html --output evaluate.html notebooks/evaluate.ipynb
     deps:
     - path: data/fit.npz
-      md5: 013e2d4494471a2954bfd2e4b348e243
-      size: 5240
+      md5: 984f27916e6942e49cdd9b387fec6f92
+      size: 46432
     - path: data/metrics.json
-      md5: 352254f2836f9545ca38de32ebdadb0c
-      size: 780
+      md5: 2bdae609750531ce02ded4aa136906b6
+      size: 1143
     - path: data/model
-      md5: 77bfedd8ee569630010359751a89653c.dir
-      size: 944070
+      md5: 4231ecc4e93050760d6d4f32aa08a5b5.dir
+      size: 1179502
       nfiles: 4
     - path: notebooks/evaluate.ipynb
-      md5: 8e5ee098d75dafb46517af1de981a07c
-      size: 14184819
+      md5: ee7e752f82c4599864cd56619972ed2c
+      size: 6271
     outs:
     - path: notebooks/evaluate.html
-      md5: f4edc99ff199c7f65b6482eee6437164
-      size: 10879773
+      md5: 38890e00f9d91cba289438be605a3a50
+      size: 10685312
