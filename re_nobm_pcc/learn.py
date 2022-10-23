@@ -8,7 +8,7 @@ import tensorflow_addons as tfa
 from .kit import DATA_DIR, TAXA
 
 BATCH = 256
-EPOCHS = 2
+EPOCHS = 500
 PATIENCE = 50
 LEARNING_RATE = 0.001
 PRESENCE_PREDICTION_THRESHOLD = 0.0
@@ -25,11 +25,14 @@ if __name__ == '__main__':
     validate = validate.batch(BATCH)
     test = tf.data.Dataset.load(str(DATA_DIR/'test'))
     test = test.batch(BATCH)
-    ## compute loss weights # FIXME weights
-    # # TODO how to use Normalization for this Dataset?
-    # y = [np.stack(i) for _, i in train.as_numpy_iterator()]
-    # y = np.concatenate(y, axis=1)
-    # weights = (1/y.mean(axis=1)).tolist()
+    ## compute loss weights
+    # TODO how to use Normalization for a structured Dataset?
+    y = [
+        np.stack(tuple(i[f'abundance_{j}'] for j in TAXA))
+        for _, i in train.as_numpy_iterator()
+    ]
+    y = np.concatenate(y, axis=1)
+    weights = (1/y.mean(axis=1)).tolist()
     ## build model
     # single input with normalization
     x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
@@ -37,20 +40,19 @@ if __name__ == '__main__':
     y.adapt(train.map(lambda x, _: x))
     y = y(x)
     # sequential layers
-    y = tf.keras.layers.Dense(32, 'swish')(y)
+    y = tf.keras.layers.Dense(32, 'relu')(y)
     # multiple outputs for 1) different taxa and 2) presence and abundance
     outputs = []
     compile_kwargs = {
         'loss': {},
-        # 'loss_weights': {}, # FIXME weights
+        'loss_weights': {},
     }
     for i, item in enumerate(TAXA):
-        # compile_kwargs['loss_weights'][name] = weights[i] # FIXME weights
         name = f'abundance_{item}'
         y_i = tf.keras.layers.Dense(1, activation='softplus', name=name)(y)
         outputs.append(y_i)
         compile_kwargs['loss'][name] = tf.keras.losses.MeanAbsoluteError()
-        # compile_kwargs['loss_weights'][name] = weights[i] #FIXME weights
+        compile_kwargs['loss_weights'][name] = weights[i]
     model = tf.keras.Model(inputs=[x], outputs=outputs)
     model.compile(
         optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
