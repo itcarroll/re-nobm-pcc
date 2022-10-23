@@ -40,7 +40,14 @@ if __name__ == '__main__':
     y.adapt(train.map(lambda x, _: x))
     y = y(x)
     # sequential layers
-    y = tf.keras.layers.Dense(32, 'relu')(y)
+    y = tf.keras.layers.Conv1D(filters=8, kernel_size=7, activation='swish')(y)
+    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Conv1D(filters=8, kernel_size=5, activation='swish')(y)
+    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Conv1D(filters=8, kernel_size=3, activation='swish')(y)
+    y = tf.keras.layers.MaxPooling1D(pool_size=3)(y)
+    y = tf.keras.layers.Flatten()(y)
+    y = tf.keras.layers.Dense(units=32, activation='swish')(y)
     # multiple outputs for 1) different taxa and 2) presence and abundance
     outputs = []
     compile_kwargs = {
