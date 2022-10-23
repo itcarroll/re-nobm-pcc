@@ -14,12 +14,6 @@ LEARNING_RATE = 0.001
 PRESENCE_PREDICTION_THRESHOLD = 0.0
 
 
-class MAEofPresent(tf.keras.losses.MeanAbsoluteError):
-    def __call__(self, y, y_hat, sample_weight=None):
-        w = tf.stop_gradient(tf.math.sigmoid(y_hat[:, 1]))
-        return super(MAEofPresent, self).__call__(y, y_hat[:, :1], w)
-
-
 if __name__ == '__main__':
     ## load datasets
     train = (
@@ -31,11 +25,14 @@ if __name__ == '__main__':
     validate = validate.batch(BATCH)
     test = tf.data.Dataset.load(str(DATA_DIR/'test'))
     test = test.batch(BATCH)
-    ## compute loss weights # FIXME weights
-    # # TODO how to use Normalization for this Dataset?
-    # y = [np.stack(i) for _, i in train.as_numpy_iterator()]
-    # y = np.concatenate(y, axis=1)
-    # weights = (1/y.mean(axis=1)).tolist()
+    ## compute loss weights
+    # TODO how to use Normalization for a structured Dataset?
+    y = [
+        np.stack(tuple(i[f'abundance_{j}'] for j in TAXA))
+        for _, i in train.as_numpy_iterator()
+    ]
+    y = np.concatenate(y, axis=1)
+    weights = (1/y.mean(axis=1)).tolist()
     ## build model
     # single input with normalization
     x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
@@ -43,28 +40,19 @@ if __name__ == '__main__':
     y.adapt(train.map(lambda x, _: x))
     y = y(x)
     # sequential layers
-    y = tf.keras.layers.Dense(128, 'swish')(y)
+    y = tf.keras.layers.Dense(32, 'relu')(y)
     # multiple outputs for 1) different taxa and 2) presence and abundance
     outputs = []
     compile_kwargs = {
         'loss': {},
-        # 'loss_weights': {}, # FIXME weights
+        'loss_weights': {},
     }
     for i, item in enumerate(TAXA):
-        # name must match keys in tf.data.Dataset
-        name = f'presence_{item}'
-        y_presence = tf.keras.layers.Dense(1, activation='linear', name=name)(y)
-        outputs.append(y_presence)
-        compile_kwargs['loss'][name] = tf.keras.losses.BinaryCrossentropy(
-            from_logits=True,
-        )
-        # compile_kwargs['loss_weights'][name] = weights[i] # FIXME weights
         name = f'abundance_{item}'
-        y_abundance = tf.keras.layers.Dense(1, activation='softplus')(y)
-        y = tf.keras.layers.Concatenate(name=name)([y_abundance, y_presence])
-        outputs.append(y)
-        compile_kwargs['loss'][name] = MAEofPresent()
-        # compile_kwargs['loss_weights'][name] = weights[i] #FIXME weights
+        y_i = tf.keras.layers.Dense(1, activation='softplus', name=name)(y)
+        outputs.append(y_i)
+        compile_kwargs['loss'][name] = tf.keras.losses.MeanAbsoluteError()
+        compile_kwargs['loss_weights'][name] = weights[i]
     model = tf.keras.Model(inputs=[x], outputs=outputs)
     model.compile(
         optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
@@ -85,33 +73,9 @@ if __name__ == '__main__':
     )
     model.save(str(DATA_DIR/'model'))
     np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
-    ## add metrics to evaluate on test
+    ## add metrics for evaluation only
     model.compile(
-        metrics={
-            f'presence_{i}': tf.keras.metrics.AUC(name='AUC')
-            for i in TAXA
-        },
         **compile_kwargs,
-    )
-    ## build abundance model for test evaluation only
-    outputs = {i.node.layer.name: i for i in model.outputs}
-    abundance_outputs = []
-    for item in TAXA:
-        abundance_outputs.append(
-            # presence (as 0 or 1) * abundance
-            tf.keras.layers.Multiply(name=f'product_{item}')([
-                tf.cast(
-                    outputs[f'presence_{item}'] > PRESENCE_PREDICTION_THRESHOLD,
-                    tf.float32,
-                ),
-                outputs[f'abundance_{item}'][:, :1],
-            ])
-        )
-    abundance_model = tf.keras.Model(
-        inputs=model.inputs,
-        outputs=abundance_outputs,
-    )
-    abundance_model.compile(
         metrics=[
             tf.keras.metrics.MeanMetricWrapper(
                 fn=lambda y_true, y_pred: y_pred - y_true,
@@ -123,15 +87,7 @@ if __name__ == '__main__':
         ],
     )
     ## calculate metrics and write to json
-    abundance_metrics = abundance_model.evaluate(
-        test.map(lambda x, y: (x, {
-            k.replace('abundance', 'product'): v
-            for k, v in y.items() if k.startswith('abundance')
-        }))
-    )
-    all_metrics = {
-        k.name: v for k, v in zip(abundance_model.metrics, abundance_metrics)
-    }
+    all_metrics = {}
     metrics = model.evaluate(test)
     all_metrics.update({k.name: v for k, v in zip(model.metrics, metrics)})
     with (DATA_DIR/'metrics.json').open('w') as stream:
