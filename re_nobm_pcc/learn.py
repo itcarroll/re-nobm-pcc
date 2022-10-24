@@ -40,7 +40,8 @@ if __name__ == '__main__':
     y.adapt(train.map(lambda x, _: x))
     y = y(x)
     # sequential layers
-    y = tf.keras.layers.Dense(32, 'relu')(y)
+    y = tf.keras.layers.Dense(56, 'swish')(y)
+    y = tf.keras.layers.Dense(24, 'swish')(y)
     # multiple outputs for 1) different taxa and 2) presence and abundance
     outputs = []
     compile_kwargs = {
