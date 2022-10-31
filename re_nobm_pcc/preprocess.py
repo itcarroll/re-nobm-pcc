@@ -20,7 +20,7 @@ PhytoChl = (
     .rename(time='month')
     .sortby('month')
     .assign_coords(month=('month', np.arange(1, 13)))
-    .get(TAXA)
+    .get(TAXA + ['tot'])
     # .to_array(dim='component', name='labels') # TODO multivariate output rather than multiple outputs
     .transpose('lon', 'lat', 'month', ...)
 )
@@ -77,6 +77,7 @@ if __name__ == '__main__':
         sample = dataset.isel({
             'pxl': np.sort(rng.choice(pxl, replace=False, size=num))
         })
+        dataset = dataset.drop_vars('tot')
     ## write outputs
     # write a data sample to file for previewing
     sample.to_netcdf(DATA_DIR/'sample.nc')
