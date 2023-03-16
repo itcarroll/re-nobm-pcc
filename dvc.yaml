@@ -22,7 +22,7 @@ stages:
   preprocess:
     # prepare the features and labels for model training
     # on gpu for tf analysis?
-    cmd: python -m re_nobm_pcc.preprocess
+    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.preprocess
     deps:
     - data/nobm
     - re_nobm_pcc/kit.py
@@ -46,10 +46,11 @@ stages:
     - re_nobm_pcc/preprocess.py
     - notebooks/preview.ipynb
     outs:
-    - docs/preview.html
+    - notebooks/preview.html
+    frozen: true
   learn:
     # train the model
-    cmd: python -m re_nobm_pcc.learn
+    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.learn
     deps:
     - data/train
     - data/validate
@@ -64,10 +65,16 @@ stages:
         cache: false
   evaluate:
     # generate report on model performance
-    cmd: >-
-      jupyter nbconvert --execute --no-input --to html
-      --output docs/evaluate.html notebooks/evaluate.ipynb
+    cmd: jupyter nbconvert
+      --execute
+      --no-input
+      --to html
+      --output evaluate.html
+      notebooks/evaluate.ipynb
     deps:
+    - notebooks/evaluate.ipynb
+    - data/model
+    - data/fit.npz
     - data/metrics.json
     outs:
-    - docs/evaluate.html
+    - notebooks/evaluate.html

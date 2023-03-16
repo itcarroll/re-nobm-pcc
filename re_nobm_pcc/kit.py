@@ -7,6 +7,7 @@ import xarray as xr
 
 PROJECT_DIR = pathlib.Path(os.environ['PWD'])
 DATA_DIR = PROJECT_DIR/'data'
+TAXA = ['chl', 'coc', 'cya', 'dia']
 
 
 def ecdf(data, axis=0):

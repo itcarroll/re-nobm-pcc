@@ -1,2 +1,2 @@
 [filter "notebook"]
-    clean = jupyter nbconvert --to=notebook --ClearOutputPreprocessor.enabled=True --stdin --stdout
+    clean = jupyter nbconvert --to=notebook --ClearOutputPreprocessor.enabled=True --ClearMetadataPreprocessor.enabled=True --stdin --stdout

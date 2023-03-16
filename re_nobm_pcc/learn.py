@@ -1,43 +1,63 @@
+from cmath import isnan
 import json
 
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 
-from .kit import DATA_DIR
-
+from .kit import DATA_DIR, TAXA
 
 BATCH = 256
-EPOCHS = 2
-
-
-class PCC(tf.keras.Model):
-
-    def __init__(self):
-        super().__init__()
-        self._layers = (
-                tf.keras.layers.Dense(units=16, activation=tf.nn.relu),
-                tf.keras.layers.Dense(units=4),
-            )
-
-    def call(self, inputs):
-        outputs = inputs
-        for item in self._layers:
-            outputs = item(outputs)
-        return outputs
+EPOCHS = 500
+PATIENCE = 50
+LEARNING_RATE = 0.001
+PRESENCE_PREDICTION_THRESHOLD = 0.0
 
 
 if __name__ == '__main__':
     ## load datasets
-    # TODO does batching the validate and test Datasets hit performance?
-    train = tf.data.experimental.load(str(DATA_DIR/'train')).batch(BATCH)
-    validate = tf.data.experimental.load(str(DATA_DIR/'validate')).batch(BATCH)
-    test = tf.data.experimental.load(str(DATA_DIR/'test')).batch(BATCH)
-    ## compile model
-    model = PCC()
+    train = (
+        tf.data.Dataset.load(str(DATA_DIR/'train'))
+        .shuffle(16*BATCH)
+        .batch(BATCH)
+    )
+    validate = tf.data.Dataset.load(str(DATA_DIR/'validate'))
+    validate = validate.batch(BATCH)
+    test = tf.data.Dataset.load(str(DATA_DIR/'test'))
+    test = test.batch(BATCH)
+    ## compute loss weights
+    # TODO how to use Normalization for a structured Dataset?
+    y = [
+        np.stack(tuple(i[f'abundance_{j}'] for j in TAXA))
+        for _, i in train.as_numpy_iterator()
+    ]
+    y = np.concatenate(y, axis=1)
+    weights = (1/y.mean(axis=1)).tolist()
+    ## build model
+    # single input with normalization
+    x = tf.keras.Input(shape=train.element_spec[0].shape[1:])
+    y = tf.keras.layers.Normalization()
+    y.adapt(train.map(lambda x, _: x))
+    y = y(x)
+    # sequential layers
+    y = tf.keras.layers.Dense(32, 'relu')(y)
+    # multiple outputs for 1) different taxa and 2) presence and abundance
+    outputs = []
+    compile_kwargs = {
+        'loss': {},
+        'loss_weights': {},
+    }
+    for i, item in enumerate(TAXA):
+        name = f'abundance_{item}'
+        y_i = tf.keras.layers.Dense(1, activation='softplus', name=name)(y)
+        outputs.append(y_i)
+        compile_kwargs['loss'][name] = tf.keras.losses.MeanAbsoluteError()
+        compile_kwargs['loss_weights'][name] = weights[i]
+    model = tf.keras.Model(inputs=[x], outputs=outputs)
     model.compile(
-        optimizer=tf.optimizers.Adam(learning_rate=0.001),
-        loss=tf.keras.losses.MeanSquaredError(),
-        run_eagerly=True, # DEBUG
+        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
+        **compile_kwargs,
+        # run_eagerly=True, # DEBUG
     )
     ## fit and save
     fit = model.fit(
@@ -46,24 +66,29 @@ if __name__ == '__main__':
         callbacks=[
             tf.keras.callbacks.EarlyStopping(
                 monitor='val_loss',
-                patience=10,
+                patience=PATIENCE,
             ),
         ],
         validation_data=validate,
     )
     model.save(str(DATA_DIR/'model'))
     np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
-    ## write evaluation metrics
-    # TODO residuals
+    ## add metrics for evaluation only
     model.compile(
-        loss=tf.keras.losses.MeanSquaredError(),
+        **compile_kwargs,
         metrics=[
-            tf.keras.metrics.MeanAbsoluteError(),
-            # TODO R2
+            tf.keras.metrics.MeanMetricWrapper(
+                fn=lambda y_true, y_pred: y_pred - y_true,
+                name='ME',
+            ),
+            tf.keras.metrics.MeanAbsoluteError(name='MAE'),
+            tf.keras.metrics.RootMeanSquaredError(name='RMSE'),
+            tfa.metrics.RSquare(name='R2'),
         ],
     )
-    metrics = {
-        k: v for k, v in zip(['MSE', 'MAE'], model.evaluate(test))
-    }
-    with open(DATA_DIR/'metrics.json', 'w') as stream:
-        json.dump(metrics, stream)
+    ## calculate metrics and write to json
+    all_metrics = {}
+    metrics = model.evaluate(test)
+    all_metrics.update({k.name: v for k, v in zip(model.metrics, metrics)})
+    with (DATA_DIR/'metrics.json').open('w') as stream:
+        json.dump(all_metrics, stream)

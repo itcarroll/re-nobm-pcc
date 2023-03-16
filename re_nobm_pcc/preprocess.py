@@ -1,13 +1,15 @@
 import dask
 import numpy as np
-import tensorflow as tf
 import xarray as xr
 
-from .kit import DATA_DIR
+from .kit import DATA_DIR, TAXA
 
-
+# FIXME still getting different sample and shards on each run
 rng = np.random.default_rng(seed=7033760348669894684)
 num = 1000
+
+# TODO expert, taxa specific thresholds
+PRESENT_ABOVE = 10e-6
 
 PhytoChl = (
     xr.open_mfdataset(
@@ -18,10 +20,11 @@ PhytoChl = (
     .rename(time='month')
     .sortby('month')
     .assign_coords(month=('month', np.arange(1, 13)))
-    .get(['chl', 'dia', 'coc', 'cya'])
-    .to_array(dim='component', name='labels')
-    .transpose('lon', 'lat', 'month', 'component')
+    .get(TAXA + ['tot'])
+    # .to_array(dim='component', name='labels') # TODO multivariate output rather than multiple outputs
+    .transpose('lon', 'lat', 'month', ...)
 )
+
 HyperLwn = (
     xr.open_dataarray(
         DATA_DIR/'nobm'/'HyperLwn.R2014.nc4',
@@ -47,7 +50,10 @@ HyperLwn = (
 
 
 if __name__ == '__main__':
-    ## stack pixels and merge features to labels
+    ## imports
+    import tensorflow as tf
+    ## reshape data
+    # stack pixels and merge features to labels
     with dask.config.set(**{'array.slicing.split_large_chunks': True}):
         dataset = (
             xr.merge(
@@ -71,13 +77,22 @@ if __name__ == '__main__':
         sample = dataset.isel({
             'pxl': np.sort(rng.choice(pxl, replace=False, size=num))
         })
-    ## write a data sample to file for previewing
+        dataset = dataset.drop_vars('tot')
+    ## write outputs
+    # write a data sample to file for previewing
     sample.to_netcdf(DATA_DIR/'sample.nc')
-    ## split the labeled data and write to tf shards
+    # split the labeled data and write to tf shards
     split = xr.DataArray(
         rng.choice(('train', 'validate', 'test'), p=(0.6, 0.2, 0.2), size=pxl),
         dims='pxl',
     )
     for k, v in dataset.groupby(split):
-        ds = tf.data.Dataset.from_tensor_slices((v['features'], v['labels']))
-        tf.data.experimental.save(ds, str(DATA_DIR/k))
+        idx = v > PRESENT_ABOVE
+        ds = tf.data.Dataset.from_tensor_slices((
+            # TODO multivariate output rather than multiple outputs
+            v['features'],
+            dict(
+                **{f'abundance_{i}': v[i].where(idx[i], 0.0) for i in TAXA},
+            )
+        ))
+        ds.save(str(DATA_DIR/k))
