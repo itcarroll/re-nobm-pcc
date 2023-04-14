@@ -1,0 +1,11 @@
+schema: '2.0'
+stages:
+  nobm_day:
+    cmd: "wget --directory-prefix=\"nobm_day\" --no-parent --no-host-directories --cut-dirs=3\
+      \ --recursive --reject \"*.*\" \"https://gmao.gsfc.nasa.gov/gmaoftp/rousseaux/Ian/\"\
+      \n"
+    outs:
+    - path: nobm_day
+      md5: 9b383b92fb1f1e2010e7068c9d63daa9.dir
+      size: 717093531650
+      nfiles: 6915

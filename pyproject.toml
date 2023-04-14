@@ -1,23 +1,23 @@
 [tool.poetry]
-name = "RE-NOBM-PCC"
+name = "re-nobm-pcc"
 version = "0.1.0"
 description = ""
-authors = ["Ian Carroll <ian.t.carroll@nasa.gov>"]
-packages = [{include = "re_nobm_pcc"}]
+authors = []
 
 [tool.poetry.dependencies]
-python = "^3.8,<3.11"
-scipy = "^1.8.1"
-xarray = {extras = ["parallel"], version = "^2022.6.0"}
-# pip install --no-binary netcdf4 netcdf4
+dask = {extras = ["array"], version = "^2023.3.2"}
 hvplot = "^0.8.1"
-dvc = {version = "^2.9.5", extras = ["gdrive"]}
-jupyterlab = "^3.2.9"
-pytest = "^7.0.1"
-tensorflow-addons = "^0.18.0"
+# matplotlib = "^3.6.1" # for what?
+netcdf4 = "^1.6.3"
+# pip install --no-binary netcdf4 netcdf4 # for what? maybe had cartopy at some point?
+#oasim = {git = "https://oceandata.sci.gsfc.nasa.gov/rcs/ian/oasim-rrs.git"} # FIXME oasim not building, see https://github.com/scikit-build/scikit-build-sample-projects/pull/35
+python = ">=3.11,<3.12"
+scipy = "^1.8.1"
 tensorflow = "^2.10.0"
-matplotlib = "^3.6.1"
+# tensorflow-addons = "^0.18.0" # for what?
+xarray = "^2022.6.0"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.group.dev.dependencies]
+dvc = {version = "^2.9.5", extras = ["gdrive"]}
+ipykernel = "^6.21.3"
+pytest = "^7.0.1"

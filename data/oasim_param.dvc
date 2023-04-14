@@ -1,0 +1,5 @@
+outs:
+- md5: 7bca5ebd633e56bea5f6e6cee4644ea9.dir
+  size: 205042
+  nfiles: 17
+  path: oasim_param

@@ -1,24 +1,33 @@
 stages:
-  oasim:
-    # generate corresponding lwn files for each nobm file
-    # TODO study /usr/bin/time -v and improve cluster efficiency
+  notebooks:
+    foreach:
+    - preview
+    do:
+      cmd: >
+        jupyter nbconvert
+        --execute
+        --ExecutePreprocessor.kernel_name=re-nobm-pcc
+        --to=html
+        --output-dir=docs
+        notebooks/${item}.ipynb
+      outs:
+      - docs/${item}.html
+  simulate:
     cmd:
-      sbatch
-        --job-name=oasim
-        --array=0-17%6
-        --cpus-per-task=128
-        --exclusive
-        --wrap="python -m re_nobm_pcc.phy2lwn"
-        &&
-      mkdir data/oasim
+    - mkdir data/rrs_day
+    - >
+        srun
+        --job-name=re-nobm-pcc.simulate
+        --output="logs/slurm-%x-%3t.out"
+        --ntasks=288
+        --mem-per-cpu=20G
+        --exclude=poseidon-compute-13
+        task re_nobm_pcc.simulate
     deps:
-    - data/nobm
+    - data/nobm_day
     - data/oasim_param
-    - re_nobm_pcc/phy2lwn.py
-    - oasim
     outs:
-    - data/oasim
-    frozen: true
+    - data/rrs_day
   preprocess:
     # prepare the features and labels for model training
     # on gpu for tf analysis?
@@ -32,22 +41,6 @@ stages:
     - data/validate
     - data/test
     - data/sample.nc
-  preview:
-    # generate report on the features and labels
-    cmd: jupyter nbconvert
-      --execute
-      --no-input
-      --to html
-      --output docs/preview.html
-      notebooks/preview.ipynb
-    deps:
-    - data/nobm
-    - re_nobm_pcc/kit.py
-    - re_nobm_pcc/preprocess.py
-    - notebooks/preview.ipynb
-    outs:
-    - notebooks/preview.html
-    frozen: true
   learn:
     # train the model
     cmd: srun --gres=gpu:1 python -m re_nobm_pcc.learn

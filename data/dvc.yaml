@@ -1,0 +1,14 @@
+stages:
+  nobm_day:
+    cmd: >
+      wget
+      --directory-prefix="nobm_day"
+      --no-parent
+      --no-host-directories
+      --cut-dirs=3
+      --recursive
+      --reject "*.*"
+      "https://gmao.gsfc.nasa.gov/gmaoftp/rousseaux/Ian/"
+    outs:
+    - nobm_day
+    frozen: true

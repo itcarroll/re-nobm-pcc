@@ -1,9 +1,10 @@
+/nobm_day
+/oasim_param
+/rrs_day
+/sample.nc
 /train
 /validate
 /test
 /model
 /fit.npz
 /metrics.json
-/sample.nc
-/nobm
-/oasim
