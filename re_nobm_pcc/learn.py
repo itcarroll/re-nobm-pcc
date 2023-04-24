@@ -3,19 +3,107 @@ import json
 
 import numpy as np
 import tensorflow as tf
-import tensorflow_addons as tfa
+import tensorflow_probability as tfp
+# import tensorflow_addons as tfa
 
-from .kit import DATA_DIR, TAXA
+from . import DATA_DIR, TAXA
 
 BATCH = 256
 EPOCHS = 500
 PATIENCE = 50
-LEARNING_RATE = 0.001
+LEARNING_RATE = 3e-4
 PRESENCE_PREDICTION_THRESHOLD = 0.0
 
 
+def loss(y_obs, y_hat):
+    """negative log-likelihood. pass the covariance as a vector of the
+       components of the Cholesky decomposition, in order compatible with
+       `tensorflow_probability.math.fill_triangular`.
+    """
+    # Multivariate Normal:
+    #   Det(Sigma) + (x - Mu)^T @ Sigma^-1 @ (x - Mu)
+    mu, vec_cholesky_sigma = y_hat
+    cholesky_sigma = tfp.math.fill_triangular(vec_cholesky_sigma)
+    y_obs_centered = y_obs - mu
+    return (
+        2 * tf.reduce_sum(
+            tf.math.log(tf.math.abs(tf.linalg.diag_part(cholesky_sigma)))
+        ) +
+        tf.tensordot(
+            y_obs_centered,
+            tf.squeeze(
+                tf.linalg.cholesky_solve(
+                    cholesky_sigma,
+                    y_obs_centered[..., tf.newaxis],
+                )
+            ),
+            axes=1,
+        )
+    )
+
+
+def main(args: list[str] | None = None) -> None:
+
+    # ## load dataset
+    dataset = tf.data.Dataset.load(str(DATA_DIR / 'dataset.tfrecord'))
+
+    # ## preprocessing layers
+    normalization = tf.keras.layers.Normalization()
+    normalization.adapt(dataset.map(lambda x, y: x).take(10 ** 1)) ## DEBUG
+
+    # ## neural network layers
+    predictors = tf.keras.Input(shape=dataset.element_spec[0].shape)
+    layer = normalization(predictors)
+    layer = tf.keras.layers.Dense(64, 'relu')(layer)
+    layer = tf.keras.layers.Dense(64, 'relu')(layer)
+    layer = tf.keras.layers.Dense(64, 'relu')(layer)
+    means = tf.keras.layers.Dense(6, 'relu')(layer)
+    covariance = tf.keras.layers.Dense(6, 'linear')(layer)
+    model = tf.keras.Model(
+        inputs=(predictors),
+        outputs=(means, covariance),
+    )
+
+    # ## optimization
+    model.compile(
+        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss=loss,
+        run_eagerly=True, # DEBUG
+    )
+
+    # ## dataset splits
+    # nb: elements are (more-or-less) ordered in time, but random in space
+    dataset = tf.data.Dataset.load(str(DATA_DIR / 'dataset.tfrecord'))
+    train, dataset = tf.keras.utils.split_dataset(dataset, 0.6)
+    validate, test = tf.keras.utils.split_dataset(dataset, 0.5)
+
+    # ## fit and save
+    # optimize parameters
+    fit = model.fit(
+        train.batch(BATCH),
+        epochs=EPOCHS,
+        callbacks=[
+            tf.keras.callbacks.EarlyStopping(
+                monitor='val_loss',
+                patience=PATIENCE,
+            ),
+        ],
+        validation_data=validate,
+    )
+    # save to custom tf model format
+    model.save(str(DATA_DIR/'model'))
+    # save training history to Numpy archive
+    np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
+    # TODO add metrics like individual R2s, likelhihood
+
+
 if __name__ == '__main__':
-    ## load datasets
+    main()
+
+    # TODO everything below is deprecated
+    import sys
+    sys.exit()
+    # ## load datasets
     train = (
         tf.data.Dataset.load(str(DATA_DIR/'train'))
         .shuffle(16*BATCH)

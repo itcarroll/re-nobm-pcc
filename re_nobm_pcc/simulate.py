@@ -5,16 +5,17 @@ import pandas as pd
 import xarray as xr
 
 from oasim import modlwn1nm, rrs1nm
+from . import DATA_DIR, TAXA
 
-
-# variable names, order matters
-phytop = ['dia', 'chl', 'cya', 'coc', 'pha', 'din']
-biogeo = ['tot', 'dtc', 'pic', 'cdc', 't', 's']
-numnan = np.array(9.99e11, dtype='f4')
+OCVAR = ['tot', 'dtc', 'pic', 'cdc', 't', 's']
+NUMNAN = np.array(9.99e11, dtype='f4')
 
 
 def read_nobm_day(year: int, month: int) -> xr.Dataset:
-    # container dataset with coordinates
+    """Read the daily NOBM data files provided by C. Rouseaux
+    """
+
+    # ## container dataset with coordinates
     start = f'{year}-{month:02}-01'
     if month == 12:
         end = f'{year + 1}-01-01'
@@ -28,8 +29,9 @@ def read_nobm_day(year: int, month: int) -> xr.Dataset:
             },
         )
     shape = (ds.dims['lon'], ds.dims['lat'])
-    # read all variables
-    for item in phytop + biogeo:
+
+    # ## read all variables
+    for item in TAXA + OCVAR:
         with open(f'data/nobm_day/{item}/{item}{year}{month:02}', 'rb') as stream:
             da = []
             for _ in ds.groupby('date.day'):
@@ -53,50 +55,60 @@ def read_nobm_day(year: int, month: int) -> xr.Dataset:
                 # skip remaining 13 layers bytes
                 stream.seek((4 + size + 4)*13, 1)
         ds[item] = xr.DataArray(np.stack(da), dims=('date', 'lon', 'lat'))
-    phy = ds[phytop]
-    ds = ds.drop_vars(phytop)
+
+    # ## combine
+    # convert phy variables to one xr.DataArray
+    phy = ds[TAXA]
+    ds = ds.drop_vars(TAXA)
     ds['phy'] = phy.to_array(dim='component').transpose(..., 'component')
-    # tot has an odd NaN flag
+    # set numbers representing nan to nan
     da = ds['tot']
+    # tot has an odd NaN flag
     ds['tot'] = da.where(da != np.float32(5.9939996e12))
     # everything else uses the same NaN flag
-    ds = ds.where(ds != numnan)
+    ds = ds.where(ds != NUMNAN)
+
     return ds
 
 
 def main(argv: list[str]) -> None:
 
-    # logging
+    # ## logging
     logging.basicConfig(level=logging.INFO)
 
+    # ## arguments
     # cast argv to year and month
     idx = int(argv[1])
     year = 1998 + (idx // 12)
     month = 1 + (idx % 12)
     logging.info(f'month is {year}-{month:02}')
 
+    # ## inputs
     # load nobm model results
     ds = read_nobm_day(year, month)
     logging.info(f'read nobm day')
 
+    # ## outputs
     # calculate remote sensing reflectance (rrs)
     rrs = []
     for _, value in ds.groupby('date.day'):
         value = value.squeeze('date')
-        rlwn = modlwn1nm(*[value[i].data for i in ['phy'] + biogeo])
+        rlwn = modlwn1nm(*[value[i].data for i in ['phy'] + OCVAR])
         rrs.append(rrs1nm(rlwn))
     rrs = xr.DataArray(
         np.stack(rrs),
         coords={'wavelength': np.arange(250, 751)},
         dims=('date', 'lon', 'lat', 'wavelength'),
         )
-    ds['rrs'] = rrs.where(rrs != numnan, np.nan)
+    ds['rrs'] = rrs.where(rrs != NUMNAN, np.nan)
     logging.info(f'calculated rrs')
 
-    # save to file
-    path = f'data/rrs_day/rrs{year}{month:02}.nc'
+    # ## save
+    # write predictors and response, plus coordinates, to NetCDF
+    # FIXME add coords from preview.ipynb
+    path = DATA_DIR / 'rrs_day' / f'rrs{year}{month:02}.nc'
     ds.to_netcdf(path)
-    logging.info(f'wrote to {path}')
+    logging.info(f'saved rrs to {path}')
 
 
 if __name__ == '__main__':

@@ -1,13 +1,11 @@
-import os
-import pathlib
+from pathlib import Path
 
 import numpy as np
 import xarray as xr
 
-
-PROJECT_DIR = pathlib.Path(os.environ['PWD'])
-DATA_DIR = PROJECT_DIR/'data'
-TAXA = ['chl', 'coc', 'cya', 'dia']
+DATA_DIR = (Path(__file__).parents[1]/'data').absolute()
+TAXA = ('dia', 'chl', 'cya', 'coc', 'pha', 'din')
+WAVELENGTH = tuple(range(350, 731))
 
 
 def ecdf(data, axis=0):
@@ -18,6 +16,7 @@ def ecdf(data, axis=0):
 
     :return: a matching array-like of (marginal) cumulative probabilities
     """
+
     prb = np.expand_dims(
         np.linspace(1/data.shape[axis], 1, data.shape[axis]),
         tuple(range(axis + 1, len(data.shape))),
@@ -25,6 +24,7 @@ def ecdf(data, axis=0):
     idx = np.argsort(data, axis=axis)
     arr = np.empty_like(data, dtype=prb.dtype)
     np.put_along_axis(arr, idx, prb, axis=axis)
+
     return arr
 
 
@@ -36,6 +36,7 @@ def svd(data, dim, k=None):
 
     :return: a triple of PCA scores, singular values, and components
     """
+
     sizes = dict(data.sizes)
     k_default = sizes.pop(dim)
     if k is None:
@@ -53,4 +54,5 @@ def svd(data, dim, k=None):
         dims=('pc', dim),
         name='weight',
     )
+
     return scores, s[:k], vectors
