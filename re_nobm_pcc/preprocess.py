@@ -1,7 +1,5 @@
 import itertools
-import os
 
-import dask
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -10,15 +8,10 @@ import xarray as xr
 from . import DATA_DIR, TAXA, WAVELENGTH
 
 
-def load_tensors(split: str) -> callable:
-    """load modelled data for 1998-2019, holding 2020-2021 for analysis
-
-    the function returns a tensorflow.data.Dataset.from_generator object
-    that returns a train, validate, or test subset
+def load_tensors() -> tf.data.Dataset:
+    """load modelled data for 1998-2019, reserving 2020-2021 for analysis
     """
-
-    # the generator needs the same random seed to re-use splits
-    random = np.random.default_rng(seed=6788239663313185733)
+    vars = {'rrs': len(WAVELENGTH), 'phy': len(TAXA)}
 
     def generator() -> tuple:
         for i, j in itertools.product(range(1), range(1)): ## 22, 12
@@ -26,60 +19,47 @@ def load_tensors(split: str) -> callable:
             month = 1 + j
             file = DATA_DIR / 'rrs_day' / f'rrs{year}{month:02}.nc'
             ds = (
-                xr.open_dataset(file, chunks={})
+                xr.open_dataset(file)
+                [list(vars)]
+                .loc[{'wavelength': slice(WAVELENGTH[0], WAVELENGTH[-1])}]
                 .stack({'pxl': ('date', 'lon', 'lat')})
+                .dropna('pxl')
+                .transpose('pxl', ...)
             )
-            category = random.choice(
-                a=['train', 'validate', 'test'],
-                p=(0.8, 0.1, 0.1),
-                size=ds.sizes['pxl'],
-            )
-            with dask.config.set(**{'array.slicing.split_large_chunks': False}):
-                ds = ds[{'pxl': category == split}]
-                ds = (
-                    ds[['rrs', 'phy']]
-                    .loc[{'wavelength': slice(WAVELENGTH[0], WAVELENGTH[-1])}]
-                    .dropna('pxl')
-                    .transpose('pxl', ...)
-                )
-                predictor = ds['rrs'].values
-                response = ds['phy'].values
-            yield {'rrs': predictor, 'phy': response}
+            yield {i: ds[i].values for i in vars}
 
     # the `None` dimension is necessary for variable batch sizes
     spec = {
-        'rrs': tf.TensorSpec((None, len(WAVELENGTH)), dtype=np.float32),
-        'phy': tf.TensorSpec((None, len(TAXA)), dtype=np.float32),
+        k: tf.TensorSpec((None, v), dtype=np.float32)
+        for k, v in vars.items()
     }
-
-    return tf.data.Dataset.from_generator(
+    features = tfds.features.FeaturesDict({
+        k: tfds.features.Tensor(shape=(v,), dtype=np.float32)
+        for k, v in vars.items()
+    })
+    dataset = tf.data.Dataset.from_generator(
         generator=generator,
         output_signature=spec,
     )
+    return dataset, features
 
 
 def main(
         argv: list[str] | None = None,
     ) -> None:
-    # FIXME write as tfds, but still have to resolve split and shuffle
-    # but reproducibility looks okay ....
-    # map with category would read data multiple times, different rands
 
     # ## prepare a tf.data.Dataset from files
-    # FIXME why is this at most 300% CPU?
-    train = load_tensors('train').unbatch()
-    validate = load_tensors('validate').unbatch()
-    test = load_tensors('test').unbatch()
+    dataset, features = load_tensors()
+    dataset = dataset.rebatch(512) # DEBUG
 
-    features = tfds.features.FeaturesDict({
-        'rrs': tfds.features.Tensor(shape=(len(WAVELENGTH),), dtype=np.float32),
-        'phy': tfds.features.Tensor(shape=(len(TAXA),), dtype=np.float32),
-    })
+    # FIXME why not parallel?
+    tf.random.set_seed(3187705664850833354)
+    tfds.disable_progress_bar()
     tfds.dataset_builders.store_as_tfds_dataset(
         name='tfds_rrs_day',
         version='0.1.0',
-        data_dir='data',
-        split_datasets={'train': train, 'validate': validate, 'test': test},
+        data_dir='data-test', # DEBUG
+        split_datasets={'unsplit': dataset},
         features=features,
     )
 
