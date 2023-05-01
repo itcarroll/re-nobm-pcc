@@ -1,89 +1,18 @@
 schema: '2.0'
 stages:
-  preprocess:
-    cmd: "srun --job-name=re_nobm_pcc.preprocess --output=\"logs/slurm-%x.out\" --exclude=poseidon-compute-13\
-      \ python -m re_nobm_pcc.preprocess\n"
-    deps:
-    - path: data/rrs_day
-      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
-      size: 1212237505656
-      nfiles: 288
-    outs:
-    - path: data/rrs_day_tfds
-      md5: cb2e137af13962029b11eab0944a7ab0.dir
-      size: 522219650687
-      nfiles: 1026
-  preview:
-    cmd: jupyter nbconvert docs/preview.ipynb --execute --no-input --to html
-    deps:
-    - path: data/nobm
-      md5: 311c67999373af7bcf996c1833ae5dff.dir
-      size: 1727710729
-      nfiles: 13
-    - path: docs/preview.ipynb
-      md5: c9961ae4597105ceec8236c955e4edd1
-      size: 10607548
-    - path: re_nobm_pcc/kit.py
-      md5: c7a41dca524640c0383d5e8295c6ff4a
-      size: 1552
-    - path: re_nobm_pcc/preprocess.py
-      md5: 07ac1fe66a73838fb44e2b4660c6d962
-      size: 2495
+  notebooks@preview:
+    cmd: "jupyter nbconvert\n  --execute\n  --ExecutePreprocessor.kernel_name=re-nobm-pcc\n\
+      \  --to=html\n  --output-dir=docs\n  notebooks/preview.ipynb\n"
     outs:
     - path: docs/preview.html
-      md5: e72e57b37b4576c175fc6e325de597af
-      size: 7224307
-  learn:
-    cmd: "srun --job-name=re_nobm_pcc.learn --cpus-per-task=6 --mem-per-cpu=25600M\
-      \ --exclude=poseidon-compute-13 python -m re_nobm_pcc.learn\n"
-    deps:
-    - path: data/rrs_day_tfds
-      md5: cb2e137af13962029b11eab0944a7ab0.dir
-      size: 522219650687
-      nfiles: 1026
-    - path: re_nobm_pcc/learn.py
-      md5: 8a27eda62f37fa391b66ee8b7bd7936c
-      size: 3347
-    outs:
-    - path: data/fit.npz
-      md5: edb767e542339b448a8b85b1dda98df0
-      size: 800
-    - path: data/metrics.json
-      md5: 99914b932bd37a50b983c5e7c90ae93b
-      size: 2
-    - path: data/network
-      md5: 956b504c4ec223a51e70959711f590ad.dir
-      size: 1359794
-      nfiles: 5
-  oasim:
-    cmd: sbatch --job-name=oasim --array=0-17%6 --cpus-per-task=128 --exclusive --wrap="python
-      -m re_nobm_pcc.phy2lwn" && mkdir data/oasim
-    deps:
-    - path: data/nobm
-      md5: 882a5280d90093255f33630c28588fad.dir
-      size: 16074438024
-      nfiles: 6592
-    - path: data/oasim_param
-      md5: c939bea20fb7fd7368f0c9192da5b622.dir
-      size: 1522942
-      nfiles: 15
-    - path: oasim
-      md5: 87469d877bc71e08c49c1bd0be833e34.dir
-      size: 232562
-      nfiles: 24
-    - path: re_nobm_pcc/phy2lwn.py
-      md5: 38db3e723ef55c331346d845f864a9ed
-      size: 3464
-    outs:
-    - path: data/oasim
-      md5: d751713988987e9331980363e24189ce.dir
-      size: 0
-      nfiles: 0
+      md5: b70f16305e2bf4c33afc93eb244f0c34
+      size: 5208843
   simulate:
     cmd:
     - mkdir data/rrs_day
-    - "srun --job-name=re-nobm-pcc.simulate --output=\"logs/slurm-%x-%3t.out\" --ntasks=288\
-      \ --mem-per-cpu=20G --exclude=poseidon-compute-13 task re_nobm_pcc.simulate\n"
+    - "srun\n  --job-name=re_nobm_pcc.simulate\n  --output=\"logs/slurm-%x-$j-%3t.out\"\
+      \n  --ntasks=288\n  --mem-per-cpu=20480M\n  --exclude=poseidon-compute-13\n\
+      \  task python -m re_nobm_pcc.simulate\n"
     deps:
     - path: data/nobm_day
       md5: 9b383b92fb1f1e2010e7068c9d63daa9.dir
@@ -98,10 +27,16 @@ stages:
       md5: 75e5cf07e9e0b847019259af69b11a6e.dir
       size: 1212237505656
       nfiles: 288
-  notebooks@preview:
-    cmd: "jupyter nbconvert --execute --ExecutePreprocessor.kernel_name=re-nobm-pcc\
-      \ --to=html --output-dir=docs notebooks/preview.ipynb\n"
+  preprocess:
+    cmd: "srun\n  --job-name=re_nobm_pcc.preprocess\n  --output=\"logs/slurm-%x-%j.out\"\
+      \n  --exclude=poseidon-compute-13\n  task python -m re_nobm_pcc.simulate\n"
+    deps:
+    - path: data/rrs_day
+      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
+      size: 1212237505656
+      nfiles: 288
     outs:
-    - path: docs/preview.html
-      md5: b70f16305e2bf4c33afc93eb244f0c34
-      size: 5208843
+    - path: data/rrs_day_tfds
+      md5: cb2e137af13962029b11eab0944a7ab0.dir
+      size: 522219650687
+      nfiles: 1026

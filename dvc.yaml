@@ -5,54 +5,52 @@ stages:
     do:
       cmd: >
         jupyter nbconvert
-        --execute
-        --ExecutePreprocessor.kernel_name=re_nobm_pcc
-        --to=html
-        --output-dir=docs
-        notebooks/${item}.ipynb
+          --execute
+          --ExecutePreprocessor.kernel_name=re-nobm-pcc
+          --to=html
+          --output-dir=docs
+          notebooks/${item}.ipynb
       outs:
       - docs/${item}.html
   simulate: # FIXME oasim compilation by skbuild is borked
     cmd:
     - mkdir data/rrs_day
     - >
-        srun
+      srun
         --job-name=re_nobm_pcc.simulate
-        --output="logs/slurm-%x-%3t.out"
+        --output="logs/slurm-%x-$j-%3t.out"
         --ntasks=288
         --mem-per-cpu=20480M
         --exclude=poseidon-compute-13
-        task simulate
+        task python -m re_nobm_pcc.simulate
     deps:
     - data/nobm_day
     - data/oasim_param
     outs:
     - data/rrs_day
   preprocess:
-    # prepare the features and labels for model training
     cmd: >
       srun
-      --job-name=re_nobm_pcc.preprocess
-      --output="logs/slurm-%x.out"
-      --exclude=poseidon-compute-13
-      python -m re_nobm_pcc.preprocess
+        --job-name=re_nobm_pcc.preprocess
+        --output="logs/slurm-%x-%j.out"
+        --exclude=poseidon-compute-13
+        task python -m re_nobm_pcc.simulate
     deps:
     - data/rrs_day
     outs:
     - data/rrs_day_tfds
   learn:
-    # train the model
     cmd: >
       srun
-      --job-name=re_nobm_pcc.learn
-      --cpus-per-task=6
-      --mem-per-cpu=25600M
-      --exclude=poseidon-compute-13
-      python -m re_nobm_pcc.learn
-#      --gres=gpu:2
+        --job-name=re_nobm_pcc.learn
+        --output="logs/slurm-%x-%j.out"
+        --cpus-per-task=6
+        --mem-per-cpu=25600M
+        --exclude=poseidon-compute-13
+        task python -m re_nobm_pcc.learn
+#        --gres=gpu:2
     deps:
     - data/rrs_day_tfds
-    - re_nobm_pcc/learn.py
     outs:
     - data/fit
     - data/fit.npz
@@ -60,18 +58,3 @@ stages:
     metrics:
     - data/metrics.json:
         cache: false
-  evaluate:
-    # generate report on model performance
-    cmd: jupyter nbconvert
-      --execute
-      --no-input
-      --to html
-      --output evaluate.html
-      notebooks/evaluate.ipynb
-    deps:
-    - notebooks/evaluate.ipynb
-    - data/model
-    - data/fit.npz
-    - data/metrics.json
-    outs:
-    - notebooks/evaluate.html
