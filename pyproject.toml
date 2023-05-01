@@ -7,17 +7,20 @@ authors = []
 [tool.poetry.dependencies]
 dask = {extras = ["array"], version = "^2023.3.2"}
 hvplot = "^0.8.1"
-# matplotlib = "^3.6.1" # for what?
 netcdf4 = "^1.6.3"
-# pip install --no-binary netcdf4 netcdf4 # for what? maybe had cartopy at some point?
+nvidia-cudnn-cu11 = "8.6.0.163"
 #oasim = {git = "https://oceandata.sci.gsfc.nasa.gov/rcs/ian/oasim-rrs.git"} # FIXME oasim not building, see https://github.com/scikit-build/scikit-build-sample-projects/pull/35
+orjson = "3.8.10" # FIXME remove when 3.8.11 install works
 python = ">=3.11,<3.12"
 scipy = "^1.8.1"
-tensorflow = "^2.10.0"
-# tensorflow-addons = "^0.18.0" # for what?
+tensorflow = "~2.12"
+tensorflow-probability = "^0.19.0"
+tensorflow-datasets = "^4.9.2"
 xarray = "^2022.6.0"
 
 [tool.poetry.group.dev.dependencies]
 dvc = {version = "^2.9.5", extras = ["gdrive"]}
 ipykernel = "^6.21.3"
+ipywidgets = "^8.0.6"
+jupyterlab = "^3.6.3"
 pytest = "^7.0.1"

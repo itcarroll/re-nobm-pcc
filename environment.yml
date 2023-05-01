@@ -1,0 +1,10 @@
+# conda env create --file=cuda.yaml
+name: re-nobm-pcc
+channels:
+  - defaults
+  - conda-forge
+  - nvidia
+dependencies:
+  - cuda-nvcc=11.3.58
+  - cudatoolkit=11.8.0
+  - python=3.11

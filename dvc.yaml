@@ -6,23 +6,23 @@ stages:
       cmd: >
         jupyter nbconvert
         --execute
-        --ExecutePreprocessor.kernel_name=re-nobm-pcc
+        --ExecutePreprocessor.kernel_name=re_nobm_pcc
         --to=html
         --output-dir=docs
         notebooks/${item}.ipynb
       outs:
       - docs/${item}.html
-  simulate:
+  simulate: # FIXME oasim compilation by skbuild is borked
     cmd:
     - mkdir data/rrs_day
     - >
         srun
-        --job-name=re-nobm-pcc.simulate
+        --job-name=re_nobm_pcc.simulate
         --output="logs/slurm-%x-%3t.out"
         --ntasks=288
-        --mem-per-cpu=20G
+        --mem-per-cpu=20480M
         --exclude=poseidon-compute-13
-        task re_nobm_pcc.simulate
+        task simulate
     deps:
     - data/nobm_day
     - data/oasim_param
@@ -30,28 +30,31 @@ stages:
     - data/rrs_day
   preprocess:
     # prepare the features and labels for model training
-    # on gpu for tf analysis?
-    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.preprocess
+    cmd: >
+      srun
+      --job-name=re_nobm_pcc.preprocess
+      --output="logs/slurm-%x.out"
+      --exclude=poseidon-compute-13
+      python -m re_nobm_pcc.preprocess
     deps:
-    - data/nobm
-    - re_nobm_pcc/kit.py
-    - re_nobm_pcc/preprocess.py
+    - data/rrs_day
     outs:
-    - data/train
-    - data/validate
-    - data/test
-    - data/sample.nc
+    - data/rrs_day.tfds
   learn:
     # train the model
-    cmd: srun --gres=gpu:1 python -m re_nobm_pcc.learn
+    cmd: >
+      srun
+      --job-name=re_nobm_pcc.learn
+      --cpus-per-task=6
+      --mem-per-cpu=25600M
+      --exclude=poseidon-compute-13
+      python -m re_nobm_pcc.learn
+#      --gres=gpu:2
     deps:
-    - data/train
-    - data/validate
-    - data/test
-    - re_nobm_pcc/kit.py
+    - data/rrs_day_tfds
     - re_nobm_pcc/learn.py
     outs:
-    - data/model
+    - data/network
     - data/fit.npz
     metrics:
     - data/metrics.json:

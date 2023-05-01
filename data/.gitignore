@@ -8,3 +8,6 @@
 /model
 /fit.npz
 /metrics.json
+/dataset.tfrecord
+/rrs_day_tfds
+/network

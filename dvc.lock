@@ -1,34 +1,18 @@
 schema: '2.0'
 stages:
   preprocess:
-    cmd: python -m re_nobm_pcc.preprocess
+    cmd: "srun --job-name=re_nobm_pcc.preprocess --output=\"logs/slurm-%x.out\" --exclude=poseidon-compute-13\
+      \ python -m re_nobm_pcc.preprocess\n"
     deps:
-    - path: data/nobm
-      md5: 311c67999373af7bcf996c1833ae5dff.dir
-      size: 1727710729
-      nfiles: 13
-    - path: re_nobm_pcc/kit.py
-      md5: c7a41dca524640c0383d5e8295c6ff4a
-      size: 1552
-    - path: re_nobm_pcc/preprocess.py
-      md5: 07ac1fe66a73838fb44e2b4660c6d962
-      size: 2495
+    - path: data/rrs_day
+      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
+      size: 1212237505656
+      nfiles: 288
     outs:
-    - path: data/sample.nc
-      md5: 86f0bd82d3aff4a4ddf5c11ead6315bf
-      size: 2165778
-    - path: data/test
-      md5: c328fd65b8fa954a5e060b7c8d2169a2.dir
-      size: 211775935
-      nfiles: 3
-    - path: data/train
-      md5: dc0ad8bd43f401b1666d02ceb47c52bb.dir
-      size: 637351653
-      nfiles: 3
-    - path: data/validate
-      md5: 4c29cb7398c726ad0384c4e71da35e59.dir
-      size: 212575968
-      nfiles: 3
+    - path: data/dataset.tfrecord
+      md5: dabcfd26bc4a15495e8930097fb908dc.dir
+      size: 523854632838
+      nfiles: 514
   preview:
     cmd: jupyter nbconvert docs/preview.ipynb --execute --no-input --to html
     deps:
@@ -50,37 +34,27 @@ stages:
       md5: e72e57b37b4576c175fc6e325de597af
       size: 7224307
   learn:
-    cmd: python -m re_nobm_pcc.learn
+    cmd: "srun --job-name=re_nobm_pcc.learn --cpus-per-task=6 --mem-per-cpu=25600M\
+      \ --exclude=poseidon-compute-13 python -m re_nobm_pcc.learn\n"
     deps:
-    - path: data/test
-      md5: c328fd65b8fa954a5e060b7c8d2169a2.dir
-      size: 211775935
-      nfiles: 3
-    - path: data/train
-      md5: dc0ad8bd43f401b1666d02ceb47c52bb.dir
-      size: 637351653
-      nfiles: 3
-    - path: data/validate
-      md5: 4c29cb7398c726ad0384c4e71da35e59.dir
-      size: 212575968
-      nfiles: 3
-    - path: re_nobm_pcc/kit.py
-      md5: c7a41dca524640c0383d5e8295c6ff4a
-      size: 1552
+    - path: data/rrs_day_tfds
+      md5: cb2e137af13962029b11eab0944a7ab0.dir
+      size: 522219650687
+      nfiles: 1026
     - path: re_nobm_pcc/learn.py
-      md5: 24e762db4d1fbd898a70fedfb8775d03
-      size: 1836
+      md5: 8a27eda62f37fa391b66ee8b7bd7936c
+      size: 3347
     outs:
     - path: data/fit.npz
-      md5: 9df3a9aabb787935977f79a771839684
+      md5: edb767e542339b448a8b85b1dda98df0
       size: 800
     - path: data/metrics.json
-      md5: 5b641401b735aaecae5a815790c8ebae
-      size: 56
-    - path: data/model
-      md5: cdb5c6db4665c11c266dca3da17fc571.dir
-      size: 166616
-      nfiles: 4
+      md5: 99914b932bd37a50b983c5e7c90ae93b
+      size: 2
+    - path: data/network
+      md5: 956b504c4ec223a51e70959711f590ad.dir
+      size: 1359794
+      nfiles: 5
   oasim:
     cmd: sbatch --job-name=oasim --array=0-17%6 --cpus-per-task=128 --exclusive --wrap="python
       -m re_nobm_pcc.phy2lwn" && mkdir data/oasim

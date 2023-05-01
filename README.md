@@ -9,7 +9,23 @@ pretty light-weight).
 Instead, we aim to emulate the NOBM variables as a proof-of-concept for
 learning about PCC from PACE.
 
-## Getting Started
+## Getting Started (WIP)
+
+merge these into older instructions ...
+
+1. `conda env create --file=cuda.yaml`
+1. `conda activate cuda`
+1. `source .env`
+1. `mkdir -p $CONDA_PREFIX/lib/nvvm/libdevice`
+1. `cp $CONDA_PREFIX/lib/libdevice.10.bc $CONDA_PREFIX/lib/nvvm/libdevice/`
+1. `poetry install`
+
+Unlike the conda "base" environment, the "cuda" environment is a virtual environment
+that poetry will use directly (no nested virtual environment). You only need poetry
+to install/update dependencies and the current project, so `poetry run ...` or
+`poetry shell` are not needed.
+
+older instructions ...
 
 1. Set up a Python virtual environment using [Poetry][2].
     1. If not available, you [could][3] install Poetry with
@@ -32,12 +48,8 @@ run. Configure (one time only) and launch a Jupyter server to enable.
     1. `jupyter serverextension enable --py jupyter_http_over_ws`
     1. `jupyter lab --NotebookApp.allow_origin='https://colab.research.google.com'`
 
-## Reproducing
+## Reproducing (WIP)
 
-1. `pushd oasim && make && make install && popd`
-1. on machine with beegfs access `dvc repro nobm`
-1. ?? on slurm `dvc repro oasim` ??
-2. ?? on gpu node `dvc repro train` ??
 
 ## Acknowledgements
 
