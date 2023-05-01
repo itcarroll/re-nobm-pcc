@@ -5,11 +5,11 @@ stages:
     do:
       cmd: >
         jupyter nbconvert
-          --execute
-          --ExecutePreprocessor.kernel_name=re-nobm-pcc
-          --to=html
-          --output-dir=docs
-          notebooks/${item}.ipynb
+        --execute
+        --ExecutePreprocessor.kernel_name=re-nobm-pcc
+        --to=html
+        --output-dir=docs
+        notebooks/${item}.ipynb
       outs:
       - docs/${item}.html
   simulate: # FIXME oasim compilation by skbuild is borked
@@ -17,12 +17,12 @@ stages:
     - mkdir data/rrs_day
     - >
       srun
-        --job-name=re_nobm_pcc.simulate
-        --output="logs/slurm-%x-$j-%3t.out"
-        --ntasks=288
-        --mem-per-cpu=20480M
-        --exclude=poseidon-compute-13
-        task python -m re_nobm_pcc.simulate
+      --job-name=re_nobm_pcc.simulate
+      --output="logs/slurm-%x-$j-%3t.out"
+      --ntasks=288
+      --mem-per-cpu=20480M
+      --exclude=poseidon-compute-13
+      task python -m re_nobm_pcc.simulate
     deps:
     - data/nobm_day
     - data/oasim_param
@@ -31,10 +31,10 @@ stages:
   preprocess:
     cmd: >
       srun
-        --job-name=re_nobm_pcc.preprocess
-        --output="logs/slurm-%x-%j.out"
-        --exclude=poseidon-compute-13
-        task python -m re_nobm_pcc.simulate
+      --job-name=re_nobm_pcc.preprocess
+      --output="logs/slurm-%x-%j.out"
+      --exclude=poseidon-compute-13
+      task python -m re_nobm_pcc.simulate
     deps:
     - data/rrs_day
     outs:
@@ -42,12 +42,12 @@ stages:
   learn:
     cmd: >
       srun
-        --job-name=re_nobm_pcc.learn
-        --output="logs/slurm-%x-%j.out"
-        --cpus-per-task=6
-        --mem-per-cpu=25600M
-        --exclude=poseidon-compute-13
-        task python -m re_nobm_pcc.learn
+      --job-name=re_nobm_pcc.learn
+      --output="logs/slurm-%x-%j.out"
+      --cpus-per-task=6
+      --mem-per-cpu=25600M
+      --exclude=poseidon-compute-13
+      task python -m re_nobm_pcc.learn
 #        --gres=gpu:2
     deps:
     - data/rrs_day_tfds

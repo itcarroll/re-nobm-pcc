@@ -10,9 +10,9 @@ stages:
   simulate:
     cmd:
     - mkdir data/rrs_day
-    - "srun\n  --job-name=re_nobm_pcc.simulate\n  --output=\"logs/slurm-%x-$j-%3t.out\"\
-      \n  --ntasks=288\n  --mem-per-cpu=20480M\n  --exclude=poseidon-compute-13\n\
-      \  task python -m re_nobm_pcc.simulate\n"
+    - "srun --job-name=re_nobm_pcc.simulate --output=\"logs/slurm-%x-$j-%3t.out\"\
+      \ --ntasks=288 --mem-per-cpu=20480M --exclude=poseidon-compute-13 task python\
+      \ -m re_nobm_pcc.simulate\n"
     deps:
     - path: data/nobm_day
       md5: 9b383b92fb1f1e2010e7068c9d63daa9.dir
@@ -28,8 +28,8 @@ stages:
       size: 1212237505656
       nfiles: 288
   preprocess:
-    cmd: "srun\n  --job-name=re_nobm_pcc.preprocess\n  --output=\"logs/slurm-%x-%j.out\"\
-      \n  --exclude=poseidon-compute-13\n  task python -m re_nobm_pcc.simulate\n"
+    cmd: "srun --job-name=re_nobm_pcc.preprocess --output=\"logs/slurm-%x-%j.out\"\
+      \ --exclude=poseidon-compute-13 task python -m re_nobm_pcc.simulate\n"
     deps:
     - path: data/rrs_day
       md5: 75e5cf07e9e0b847019259af69b11a6e.dir
