@@ -43,12 +43,14 @@ stages:
     cmd: >
       srun
       --job-name=re_nobm_pcc.learn
-      --output="logs/slurm-%x-%j.out"
+      --output="${project-dir}/logs/slurm-%x-%j.out"
       --cpus-per-task=6
       --mem-per-cpu=25600M
       --exclude=poseidon-compute-13
       task python -m re_nobm_pcc.learn
-#        --gres=gpu:2
+#      --gres=gpu:2
+    params:
+    - project-dir
     deps:
     - data/rrs_day_tfds
     outs:

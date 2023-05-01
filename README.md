@@ -50,6 +50,7 @@ run. Configure (one time only) and launch a Jupyter server to enable.
 
 ## Reproducing (WIP)
 
+1. dvc exp run --temp --set-param project-dir="$PWD" learn && exit 
 
 ## Acknowledgements
 
