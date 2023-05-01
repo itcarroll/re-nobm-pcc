@@ -9,10 +9,10 @@ stages:
       size: 1212237505656
       nfiles: 288
     outs:
-    - path: data/dataset.tfrecord
-      md5: dabcfd26bc4a15495e8930097fb908dc.dir
-      size: 523854632838
-      nfiles: 514
+    - path: data/rrs_day_tfds
+      md5: cb2e137af13962029b11eab0944a7ab0.dir
+      size: 522219650687
+      nfiles: 1026
   preview:
     cmd: jupyter nbconvert docs/preview.ipynb --execute --no-input --to html
     deps:

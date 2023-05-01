@@ -39,7 +39,7 @@ stages:
     deps:
     - data/rrs_day
     outs:
-    - data/rrs_day.tfds
+    - data/rrs_day_tfds
   learn:
     # train the model
     cmd: >
