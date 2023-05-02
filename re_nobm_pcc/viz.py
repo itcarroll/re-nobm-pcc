@@ -13,7 +13,7 @@ PGIMENTS = {
 
 def loss(ds):
     plt = (
-        ds.hvplot.line(x='epoch', y=['loss', 'val_loss'], logy=True).options('Curve', color='black')
+        ds.hvplot.line(x='epoch', y=['loss', 'val_loss']).options('Curve', color='black')
         # + hv.Overlay(tuple(
         #     fit.hvplot.line(x='epoch', y=[f'abundance_{i}_loss', f'val_abundance_{i}_loss'], logy=True)
         #     for i in TAXA
@@ -59,7 +59,7 @@ def hexbin(ds):
 def roc(ds):
     n = ds.sizes['pxl']
     plots = {}
-    for item in TAXA:        
+    for item in TAXA:
         order = ds[f'{item}_hat'].argsort()
         false_neg = np.insert(ds[item].cumsum(), 0, 0)
         pos = false_neg[-1]

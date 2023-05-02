@@ -1,13 +1,7 @@
+/fit
+/fit.npz
+/network
 /nobm_day
 /oasim_param
 /rrs_day
-/sample.nc
-/train
-/validate
-/test
-/model
-/fit.npz
-/metrics.json
-/dataset.tfrecord
 /rrs_day_tfds
-/network

@@ -8,10 +8,10 @@ import tensorflow_probability as tfp
 from . import DATA_DIR
 
 BATCH = 64
-EPOCHS = 200 # DEBUG
-PATIENCE = 50
+EPOCHS = 300
+PATIENCE = 10
 DIAG_SHIFT = 1e-5 # TODO working? avoidable?
-LEARNING_RATE = 3e-5 # TODO possible to speed up?
+LEARNING_RATE = 3e-6 # TODO possible to speed up?
 
 
 def main(args: list[str] | None = None) -> None:
@@ -63,10 +63,7 @@ def main(args: list[str] | None = None) -> None:
     # ## neural network via the sequential api
     network = tf.keras.Sequential([
         # normalization, # FIXME i think this causes problems
-        tf.keras.layers.Dense(128, 'relu'),
-        tf.keras.layers.Dense(128, 'relu'),
-        tf.keras.layers.Dense(128, 'relu'),
-        tf.keras.layers.Dense(128, 'relu'),
+        tf.keras.layers.Dense(64, 'relu'),
         tf.keras.layers.Dense(params_size, 'linear'),
         model,
     ])
