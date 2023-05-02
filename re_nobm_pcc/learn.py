@@ -63,7 +63,7 @@ def main(args: list[str] | None = None) -> None:
     # ## neural network via the sequential api
     network = tf.keras.Sequential([
         # normalization, # FIXME i think this causes problems
-        tf.keras.layers.Dense(64, 'relu'),
+        tf.keras.layers.Dense(128, 'relu'),
         tf.keras.layers.Dense(params_size, 'linear'),
         model,
     ])
@@ -91,6 +91,7 @@ def main(args: list[str] | None = None) -> None:
             ),
         ],
         validation_data=validate,
+        verbose=2,
     )
 
     # save to custom tf model format
