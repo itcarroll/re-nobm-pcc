@@ -4,16 +4,26 @@ import numpy as np
 
 from . import TAXA
 
-PGIMENTS = {
+PIGMENTS = {
     'chl': 'Greens',
     'cya': 'RdPu',
     'coc': 'Wistia',
     'dia': 'Reds',
 }
+hv.opts.defaults(
+    hv.opts.Curve(active_tools=[]),
+    hv.opts.Image(active_tools=[]),
+    hv.opts.Scatter(active_tools=[]),
+    hv.opts.HexTiles(active_tools=[], tools=['hover']),
+)
 
-def loss(ds):
+
+def loss(ds, offset=None):
+    if offset:
+        ds = offset + ds
     plt = (
-        ds.hvplot.line(x='epoch', y=['loss', 'val_loss']).options('Curve', color='black')
+        ds.hvplot.line(x='epoch', y=['loss', 'val_loss'], logy=True)
+        .options('Curve', color='black')
         # + hv.Overlay(tuple(
         #     fit.hvplot.line(x='epoch', y=[f'abundance_{i}_loss', f'val_abundance_{i}_loss'], logy=True)
         #     for i in TAXA
@@ -32,13 +42,14 @@ def hexbin(ds):
     hv.output(size=120)
     plots = {}
     for item in TAXA:
+        phy = ds.sel({'phy': item})
         plots[item] = (
             hv.HexTiles(
-                data=(ds[item], ds[f'{item}_hat']),
-                kdims=['y', 'y_hat'],
+                data=(phy['y_pred'], phy['y_true']),
+                kdims=['prediction', 'truth'],
             ).options(
                 logz=True,
-                cmap=PGIMENTS[item],
+                cmap='Greens',
                 bgcolor='lightskyblue',
                 tools=['hover'],
                 padding=0.001,

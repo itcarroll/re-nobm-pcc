@@ -1,17 +1,4 @@
 stages:
-  notebooks:
-    foreach:
-    - preview
-    do:
-      cmd: >
-        jupyter nbconvert
-        --execute
-        --ExecutePreprocessor.kernel_name=re-nobm-pcc
-        --to=html
-        --output-dir=docs
-        notebooks/${item}.ipynb
-      outs:
-      - docs/${item}.html
   simulate: # FIXME oasim compilation by skbuild is borked
     cmd:
     - mkdir data/rrs_day
@@ -28,13 +15,23 @@ stages:
     - data/oasim_param
     outs:
     - data/rrs_day
+  preview:
+    cmd: >
+      jupyter nbconvert
+      --to=html
+      --output-dir=docs
+      notebooks/preview.ipynb
+    deps:
+    - data/rrs_day
+    outs:
+    - docs/preview.html
   preprocess:
     cmd: >
       srun
       --job-name=re_nobm_pcc.preprocess
       --output="logs/slurm-%x-%j.out"
       --exclude=poseidon-compute-13
-      task python -O -m re_nobm_pcc.simulate
+      task python -O -m re_nobm_pcc.preprocess
     deps:
     - data/rrs_day
     outs:
@@ -47,7 +44,7 @@ stages:
       --cpus-per-task=6
       --mem-per-cpu=25600M
       --exclude=poseidon-compute-13
-      task python -O -m re_nobm_pcc.learn
+      task python -m re_nobm_pcc.learn
 #      --gres=gpu:2
     params:
     - project-dir
@@ -58,5 +55,16 @@ stages:
     - data/fit.npz
     - data/network
     metrics:
-    - data/metrics.json:
-        cache: false
+    - data/metrics.json
+  evaluate:
+    cmd: >
+      jupyter nbconvert
+      --execute
+      --ExecutePreprocessor.kernel_name=re-nobm-pcc
+      --to=html
+      --output-dir=docs
+      notebooks/evaluate.ipynb
+    deps:
+    - data/network
+    outs:
+    - docs/evaluate.html

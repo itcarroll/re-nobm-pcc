@@ -1,5 +1,6 @@
 /fit
 /fit.npz
+/metrics.json
 /network
 /nobm_day
 /oasim_param

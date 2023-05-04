@@ -65,8 +65,12 @@ def add_metrics(network: tf.keras.Model) -> tf.keras.Model:
     metrics.compile(
         loss=tf.keras.losses.MeanAbsoluteError(),
         metrics=[
+            tf.keras.metrics.MeanMetricWrapper(
+                fn=lambda y_true, y_pred: y_pred - y_true,
+                name='ME',
+            ),
             tf.keras.metrics.MeanAbsoluteError(name='MAE'),
-            tf.keras.metrics.MeanSquaredError(name='MSE'),
+            tf.keras.metrics.RootMeanSquaredError(name='RMSE'),
             tfa.metrics.RSquare(name='R2'),
         ],
     )
@@ -117,22 +121,26 @@ def main(args: list[str] | None = None) -> None:
         callbacks=[
             tf.keras.callbacks.TerminateOnNaN(),
             tf.keras.callbacks.ModelCheckpoint(
-                filepath=DATA_DIR / 'fit/epoch-{epoch}',
+                filepath=DATA_DIR / 'fit/epoch-{epoch:03d}',
                 save_weights_only=True,
             ),
         ],
         validation_data=validate,
-        verbose=0 if __debug__ else 2,
+        verbose=1 if __debug__ else 0,
     )
     # network with fitted parameters as tf format
     network.save(str(DATA_DIR/'network'))
     # training history as Numpy archive
     np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
+    metrics = {i: fit.history[i][-1] for i in ('loss', 'val_loss')}
 
     # ## calculate metrics
     network = add_metrics(network)
-    evaluation = network.evaluate(test)
-    metrics = {k.name: v for k, v in zip(network.metrics, evaluation)}
+    evaluation = network.evaluate(test, verbose=1 if __debug__ else 0)
+    items = zip(network.metrics, evaluation)
+    metrics.update({
+        k.name: v for k, v in items if not 'loss' in k.name
+    })
     with (DATA_DIR/'metrics.json').open('w') as stream:
         json.dump(metrics, stream)
 

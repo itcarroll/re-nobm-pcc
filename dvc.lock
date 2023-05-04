@@ -1,18 +1,11 @@
 schema: '2.0'
 stages:
-  notebooks@preview:
-    cmd: "jupyter nbconvert\n  --execute\n  --ExecutePreprocessor.kernel_name=re-nobm-pcc\n\
-      \  --to=html\n  --output-dir=docs\n  notebooks/preview.ipynb\n"
-    outs:
-    - path: docs/preview.html
-      md5: b70f16305e2bf4c33afc93eb244f0c34
-      size: 5208843
   simulate:
     cmd:
     - mkdir data/rrs_day
     - "srun --job-name=re_nobm_pcc.simulate --output=\"logs/slurm-%x-$j-%3t.out\"\
       \ --ntasks=288 --mem-per-cpu=20480M --exclude=poseidon-compute-13 task python\
-      \ -m re_nobm_pcc.simulate\n"
+      \ -O -m re_nobm_pcc.simulate\n"
     deps:
     - path: data/nobm_day
       md5: 9b383b92fb1f1e2010e7068c9d63daa9.dir
@@ -29,7 +22,7 @@ stages:
       nfiles: 288
   preprocess:
     cmd: "srun --job-name=re_nobm_pcc.preprocess --output=\"logs/slurm-%x-%j.out\"\
-      \ --exclude=poseidon-compute-13 task python -m re_nobm_pcc.simulate\n"
+      \ --exclude=poseidon-compute-13 task python -O -m re_nobm_pcc.preprocess\n"
     deps:
     - path: data/rrs_day
       md5: 75e5cf07e9e0b847019259af69b11a6e.dir
@@ -40,3 +33,41 @@ stages:
       md5: cb2e137af13962029b11eab0944a7ab0.dir
       size: 522219650687
       nfiles: 1026
+  learn:
+    cmd: "srun --job-name=re_nobm_pcc.learn --output=\"./logs/slurm-%x-%j.out\" --cpus-per-task=6\
+      \ --mem-per-cpu=25600M --exclude=poseidon-compute-13 task python -m re_nobm_pcc.learn\n"
+    deps:
+    - path: data/rrs_day_tfds
+      md5: cb2e137af13962029b11eab0944a7ab0.dir
+      size: 522219650687
+      nfiles: 1026
+    params:
+      params.yaml:
+        project-dir: .
+    outs:
+    - path: data/fit
+      md5: 9fb46cec76d52623212ebb4b6b94930b.dir
+      size: 3353019
+      nfiles: 17
+    - path: data/fit.npz
+      md5: 6a9798496c55339d4871e9d17f1e6323
+      size: 944
+    - path: data/metrics.json
+      md5: f7462d21a914c283c03fb89ce76a2a34
+      size: 897
+    - path: data/network
+      md5: e1c193eb0b7c926c31fd17babe421c8a.dir
+      size: 1057598
+      nfiles: 5
+  evaluate:
+    cmd: "jupyter nbconvert --execute --ExecutePreprocessor.kernel_name=re-nobm-pcc\
+      \ --to=html --output-dir=docs notebooks/evaluate.ipynb\n"
+    deps:
+    - path: data/network
+      md5: e1c193eb0b7c926c31fd17babe421c8a.dir
+      size: 1057598
+      nfiles: 5
+    outs:
+    - path: docs/evaluate.html
+      md5: 54163964d2a356566ff153a06f36ab07
+      size: 4427444
