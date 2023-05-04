@@ -1,4 +1,4 @@
-# conda env create --file=cuda.yaml
+# conda env create
 name: re-nobm-pcc
 channels:
   - defaults

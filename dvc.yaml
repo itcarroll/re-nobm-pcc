@@ -22,7 +22,7 @@ stages:
       --ntasks=288
       --mem-per-cpu=20480M
       --exclude=poseidon-compute-13
-      task python -m re_nobm_pcc.simulate
+      task python -O -m re_nobm_pcc.simulate
     deps:
     - data/nobm_day
     - data/oasim_param
@@ -34,7 +34,7 @@ stages:
       --job-name=re_nobm_pcc.preprocess
       --output="logs/slurm-%x-%j.out"
       --exclude=poseidon-compute-13
-      task python -m re_nobm_pcc.simulate
+      task python -O -m re_nobm_pcc.simulate
     deps:
     - data/rrs_day
     outs:
@@ -47,7 +47,7 @@ stages:
       --cpus-per-task=6
       --mem-per-cpu=25600M
       --exclude=poseidon-compute-13
-      task python -m re_nobm_pcc.learn
+      task python -O -m re_nobm_pcc.learn
 #      --gres=gpu:2
     params:
     - project-dir

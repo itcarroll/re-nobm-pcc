@@ -4930,6 +4930,40 @@ typing-extensions = ">=3.6.6"
 wrapt = ">=1.11.0,<1.15"
 
 [[package]]
+name = "tensorflow-addons"
+version = "0.20.0"
+description = "TensorFlow Addons."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "tensorflow_addons-0.20.0-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:64eb6e6a3ba488497945d6107f4f212a1d5fa4d3d98738755634f3dc54bd1f42"},
+    {file = "tensorflow_addons-0.20.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:2b248eb3fc0f5af87e936dd2140334d527d360315ea505c19d6c8d06c80d61fd"},
+    {file = "tensorflow_addons-0.20.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5d42238a04c66ee0a6aab75002eadbb184930073c9de257a948e2fb52b200b9a"},
+    {file = "tensorflow_addons-0.20.0-cp310-cp310-win_amd64.whl", hash = "sha256:6c234d4022136f76fd5f2576adb603ca8acc7b62bd6d375481b5f7fda720f470"},
+    {file = "tensorflow_addons-0.20.0-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:073ca8ad0389b8501e7756ea605de43837fc0ed13e37fe7151a1cd18af11dab9"},
+    {file = "tensorflow_addons-0.20.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f6ee5b9b8e50fc0c499281eb20ebe5fe4ebc21f7d1221cf7fd4433d0ebdbeaa6"},
+    {file = "tensorflow_addons-0.20.0-cp311-cp311-win_amd64.whl", hash = "sha256:94fdd37316c6562e9d83ca354157942f07217a49e63cc72cda8571838a520f9c"},
+    {file = "tensorflow_addons-0.20.0-cp38-cp38-macosx_10_14_x86_64.whl", hash = "sha256:e9167aca70b3b2b3005323723618917e308ba628cb4d29234ad2d168ce182b05"},
+    {file = "tensorflow_addons-0.20.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:ff59c72d63122141aa91d0fbdbe4e568ac9b3db00390b04fb0291493603786ef"},
+    {file = "tensorflow_addons-0.20.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:397874b022603f68375eb59d60dbaf85717c75fa887d0c5d6a6566ef3e4fe0ce"},
+    {file = "tensorflow_addons-0.20.0-cp38-cp38-win_amd64.whl", hash = "sha256:cf0d48760565fd501dab055a04d092690f0078bd3a70b04cc4b1db1a8d150417"},
+    {file = "tensorflow_addons-0.20.0-cp39-cp39-macosx_10_14_x86_64.whl", hash = "sha256:5f8196b830a99042faca1cea8755bc4fe869720621b81a708010371502eb3723"},
+    {file = "tensorflow_addons-0.20.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:cfb308b969dbdea92c97cab124566bc3908fe9dbc2769542e406471aa6861687"},
+    {file = "tensorflow_addons-0.20.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1ae9d92e66423a3198cdcfd0e2eb14541c5508fa29b8cde85e6b5adeb9130abf"},
+    {file = "tensorflow_addons-0.20.0-cp39-cp39-win_amd64.whl", hash = "sha256:86d969e639519ff0559ae51073297c8ac7b9014d71ca4e70e53d0a949f161027"},
+]
+
+[package.dependencies]
+packaging = "*"
+typeguard = ">=2.7,<3.0.0"
+
+[package.extras]
+tensorflow = ["tensorflow (>=2.10.0,<2.13.0)"]
+tensorflow-cpu = ["tensorflow-cpu (>=2.10.0,<2.13.0)"]
+tensorflow-gpu = ["tensorflow-gpu (>=2.10.0,<2.13.0)"]
+
+[[package]]
 name = "tensorflow-datasets"
 version = "4.9.2"
 description = "tensorflow/datasets is a library of datasets ready to use with TensorFlow."
@@ -5225,6 +5259,22 @@ files = [
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["argcomplete (>=2.0)", "pre-commit", "pytest", "pytest-mock"]
+
+[[package]]
+name = "typeguard"
+version = "2.13.3"
+description = "Run-time type checker for Python"
+category = "main"
+optional = false
+python-versions = ">=3.5.3"
+files = [
+    {file = "typeguard-2.13.3-py3-none-any.whl", hash = "sha256:5e3e3be01e887e7eafae5af63d1f36c849aaa94e3a0112097312aabfa16284f1"},
+    {file = "typeguard-2.13.3.tar.gz", hash = "sha256:00edaa8da3a133674796cf5ea87d9f4b4c367d77476e185e80251cc13dfbb8c4"},
+]
+
+[package.extras]
+doc = ["sphinx-autodoc-typehints (>=1.2.0)", "sphinx-rtd-theme"]
+test = ["mypy", "pytest", "typing-extensions"]
 
 [[package]]
 name = "typing-extensions"
@@ -5740,4 +5790,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "9d50a81491c14139b0ab959b08cf82c073e410599f211922fb5b813e2898aeb1"
+content-hash = "8d46296315d3512a066ec66d8b7e62eaa19ca919d7decd0cec2ffadd67d48cde"
