@@ -44,7 +44,7 @@ stages:
       --cpus-per-task=6
       --mem-per-cpu=25600M
       --exclude=poseidon-compute-13
-      task python -m re_nobm_pcc.learn
+      task python -O -m re_nobm_pcc.learn
 #      --gres=gpu:2
     params:
     - project-dir

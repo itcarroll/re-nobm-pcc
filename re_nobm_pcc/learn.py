@@ -35,9 +35,7 @@ def make_network(event_size: int) -> tf.keras.Model:
     # ## neural network via the sequential api
     network = tf.keras.Sequential([
         # tf.keras.layers.Normalization(), # TODO causes problems, BatchNormalization?
-        tf.keras.layers.Dense(64, 'relu'),
-        tf.keras.layers.Dense(64, 'relu'),
-        tf.keras.layers.Dense(64, 'relu'),
+        tf.keras.layers.Dense(1024, 'relu'),
         tf.keras.layers.Dense(params_size, 'linear'),
         model(event_size, tfp.distributions.Distribution.mean),
     ])
@@ -126,7 +124,7 @@ def main(args: list[str] | None = None) -> None:
             ),
         ],
         validation_data=validate,
-        verbose=1 if __debug__ else 0,
+        verbose=1 if __debug__ else 2,
     )
     # network with fitted parameters as tf format
     network.save(str(DATA_DIR/'network'))
