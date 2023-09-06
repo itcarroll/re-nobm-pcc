@@ -1,3 +1,2 @@
 #!/bin/sh
-echo "PWD: $PWD"
 exec $@ $SLURM_PROCID

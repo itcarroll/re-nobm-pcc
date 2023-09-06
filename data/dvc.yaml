@@ -2,6 +2,7 @@ stages:
   simulate:
     cmd:
     - mkdir oasim
+    - mkdir logs
     - >
       srun
       --job-name="re_nobm_pcc.simulate"
