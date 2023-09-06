@@ -5,7 +5,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import xarray as xr
 
-from . import DATA_DIR, TAXA, WAVELENGTH
+from . import DATADIR, TAXA, WAVELENGTH
 
 class RrsDayTfds(tfds.core.GeneratorBasedBuilder):
 
@@ -23,7 +23,7 @@ class RrsDayTfds(tfds.core.GeneratorBasedBuilder):
 
     def _split_generators(self, *args):
         return {
-            'train': self._generate_examples(path=DATA_DIR / 'rrs_day')
+            'train': self._generate_examples(path=DATADIR / 'rrs_day')
         }
 
     def _generate_examples(self, path):

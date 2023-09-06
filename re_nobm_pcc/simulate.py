@@ -1,70 +1,78 @@
+from typing import BinaryIO
 import logging
 
 import numpy as np
-import pandas as pd
 import xarray as xr
+from oasim_rrs import modlwn1nm, rrs1nm
 
-from oasim import modlwn1nm, rrs1nm
-from . import DATA_DIR, TAXA
-
-OCVAR = ['tot', 'dtc', 'pic', 'cdc', 't', 's']
-NUMNAN = np.array(9.99e11, dtype='f4')
+from . import DATADIR, TAXA, LONLAT
 
 
-def read_nobm_day(year: int, month: int) -> xr.Dataset:
-    """Read the daily NOBM data files provided by C. Rouseaux
-    """
+OC = ("tot", "dtc", "pic", "cdc", "t", "s")
+ENV = ("alk", "dic", "doc", "fco", "h", "irn", "pco", "pp", "rnh", "rno", "sil", "zoo")
+NUMNAN = np.array(9.99e11, dtype="f4")
+
+
+def fromfile(file: BinaryIO, shape: tuple[int] | None = (-1,)) -> np.ndarray:
+    # read start record size
+    size = np.fromfile(file, "i4", 1).reshape(())
+    # skip f"{size}" bytes of unknown purpose
+    array = np.fromfile(file, "f4", size // 4).reshape(shape, order="F")
+    # verify at end of record
+    assert size == np.fromfile(file, "i4", 1).reshape(())
+    return array
+
+
+def read_nobm(year: int, month: int) -> xr.Dataset:
+    """Read the daily NOBM data files provided by C. Rouseaux"""
 
     # ## container dataset with coordinates
-    start = f'{year}-{month:02}-01'
-    if month == 12:
-        end = f'{year + 1}-01-01'
-    else:
-        end = f'{year}-{month + 1:02}-01'
+    start = np.datetime64(f"{year}-{month:02}")
+    stop = start + np.timedelta64(1, "M")
+    step = np.timedelta64(1, "D")
     ds = xr.Dataset(
         coords={
-            'date': pd.date_range(start, end, freq='D', inclusive='left'),
-            'lon': np.arange(288),
-            'lat': np.arange(234),
-            },
-        )
-    shape = (ds.dims['lon'], ds.dims['lat'])
+            "date": np.arange(start, stop, step).astype("datetime64[ns]"),
+            "lon": np.arange(LONLAT[0], dtype=np.float32),
+            "lat": np.arange(LONLAT[1], dtype=np.float32),
+        },
+    )
+    dims = tuple(ds.dims)
+    shape = (ds.dims["lon"], ds.dims["lat"])
+    size = np.prod(shape)
 
     # ## read all variables
-    for item in TAXA + OCVAR:
-        with open(f'data/nobm_day/{item}/{item}{year}{month:02}', 'rb') as stream:
+    for item in TAXA + OC + ENV:
+        with open(DATADIR / f"nobm/{item}/{item}{year}{month:02}", "rb") as f:
             da = []
-            for _ in ds.groupby('date.day'):
-                # read start record size
-                size = np.fromfile(stream, 'i4', 1).reshape(())
-                # skip size bytes of unknown purpose
-                stream.seek(size, 1)
-                # skip end record size
-                stream.seek(4, 1)
-                # assert size == np.fromfile(stream, 'i4', 1).reshape(())
-                # read start record size
-                size = np.fromfile(stream, 'i4', 1).reshape(())
-                # read first layer of NOBM output
-                da.append(
-                    np.fromfile(stream, 'f4', size // 4)
-                    .reshape(shape, order='F')
-                    )
-                # skip end record size
-                stream.seek(4, 1)
-                # assert size == np.fromfile(stream, 'i4', 1).reshape(())
+            for _ in ds.groupby("date.day"):
+                # mystery array prepended to some files
+                if item not in ["fco", "pco"]:
+                    _ = fromfile(f)
+                da.append(fromfile(f, shape))
+                if item in ["fco", "pco", "pp"]:
+                    if item == "pp":
+                        for jtem in TAXA:
+                            da.append(fromfile(f, shape))
+                    continue
                 # skip remaining 13 layers bytes
-                stream.seek((4 + size + 4)*13, 1)
-        ds[item] = xr.DataArray(np.stack(da), dims=('date', 'lon', 'lat'))
+                f.seek((4 * (1 + size + 1)) * 13, 1)
+        if item == "pp":
+            da = np.stack(da).reshape((-1, len(TAXA) + 1, *shape)).transpose(0, 2, 3, 1)
+            ds["tpp"] = xr.DataArray(da[..., 0], dims=dims)
+            ds[item] = xr.DataArray(da[..., 1:], dims=dims + ("component",))
+        else:
+            ds[item] = xr.DataArray(np.stack(da), dims=dims)
 
     # ## combine
     # convert phy variables to one xr.DataArray
-    phy = ds[TAXA]
+    phy = ds[list(TAXA)]
     ds = ds.drop_vars(TAXA)
-    ds['phy'] = phy.to_array(dim='component').transpose(..., 'component')
+    ds["phy"] = phy.to_array(dim="component").transpose(..., "component")
     # set numbers representing nan to nan
-    da = ds['tot']
     # tot has an odd NaN flag
-    ds['tot'] = da.where(da != np.float32(5.9939996e12))
+    da = ds["tot"]
+    ds["tot"] = da.where(da != np.float32(5.9939996e12))
     # everything else uses the same NaN flag
     ds = ds.where(ds != NUMNAN)
 
@@ -72,7 +80,6 @@ def read_nobm_day(year: int, month: int) -> xr.Dataset:
 
 
 def main(argv: list[str]) -> None:
-
     # ## logging
     logging.basicConfig(level=logging.INFO)
 
@@ -81,36 +88,36 @@ def main(argv: list[str]) -> None:
     idx = int(argv[1])
     year = 1998 + (idx // 12)
     month = 1 + (idx % 12)
-    logging.info(f'month is {year}-{month:02}')
+    output = DATADIR / "oasim" / f"{year}{month:02}.nc"
 
     # ## inputs
-    # load nobm model results
-    ds = read_nobm_day(year, month)
-    logging.info(f'read nobm day')
+    logging.info(f"reading nobm for {year}-{month:02}")
+    ds = read_nobm(year, month)
 
     # ## outputs
-    # calculate remote sensing reflectance (rrs)
+    logging.info("calculating remote sensing reflectance (rrs)")
     rrs = []
-    for _, value in ds.groupby('date.day'):
-        value = value.squeeze('date')
-        rlwn = modlwn1nm(*[value[i].data for i in ['phy'] + OCVAR])
+    for _, value in ds.groupby("date.day"):
+        value = value.squeeze("date")
+        rlwn = modlwn1nm(*[value[i].data for i in ("phy",) + OC])
         rrs.append(rrs1nm(rlwn))
     rrs = xr.DataArray(
         np.stack(rrs),
-        coords={'wavelength': np.arange(250, 751)},
-        dims=('date', 'lon', 'lat', 'wavelength'),
-        )
-    ds['rrs'] = rrs.where(rrs != NUMNAN, np.nan)
-    logging.info(f'calculated rrs')
+        coords={"wavelength": np.arange(250, 751)},
+        dims=("date", "lon", "lat", "wavelength"),
+    )
+    ds["rrs"] = rrs.where(rrs != NUMNAN, np.nan)
+    # roll on lon and assign true coordinates
+    ds = ds.roll({"lon": ds.sizes["lon"] // 2})
+    ds["lon"] = ("lon", np.linspace(-180, 180, ds.sizes["lon"]))
+    ds["lat"] = ("lat", np.linspace(-84, 71.4, ds.sizes["lat"]))
 
     # ## save
-    # write predictors and response, plus coordinates, to NetCDF
-    # FIXME add coords from preview.ipynb
-    path = DATA_DIR / 'rrs_day' / f'rrs{year}{month:02}.nc'
-    ds.to_netcdf(path)
-    logging.info(f'saved rrs to {path}')
+    logging.info(f"writing phy and rrs to {output}")
+    ds.to_netcdf(output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     sys.exit(main(sys.argv))

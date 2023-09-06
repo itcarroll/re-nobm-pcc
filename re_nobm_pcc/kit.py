@@ -3,9 +3,11 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-DATA_DIR = (Path(__file__).parents[1]/'data').absolute()
-TAXA = ('dia', 'chl', 'cya', 'coc', 'pha', 'din')
+
+DATADIR = (Path(__file__).parents[1] / "data").absolute()
+TAXA = ("dia", "chl", "cya", "coc", "din", "pha")
 WAVELENGTH = tuple(range(350, 731))
+LONLAT = (288, 234)
 
 
 def ecdf(data, axis=0):
@@ -18,7 +20,7 @@ def ecdf(data, axis=0):
     """
 
     prb = np.expand_dims(
-        np.linspace(1/data.shape[axis], 1, data.shape[axis]),
+        np.linspace(1 / data.shape[axis], 1, data.shape[axis]),
         tuple(range(axis + 1, len(data.shape))),
     )
     idx = np.argsort(data, axis=axis)
@@ -43,16 +45,16 @@ def svd(data, dim, k=None):
         k = k_default
     u, s, vh = np.linalg.svd(data, full_matrices=False)
     scores = xr.DataArray(
-        data=u[:, :k]*s[:k],
-        coords={'pc': ('pc', [f'PC{i}' for i in range(k)])},
-        dims=tuple(sizes) + ('pc',),
-        name='coefficient',
+        data=u[:, :k] * s[:k],
+        coords={"pc": ("pc", [f"PC{i}" for i in range(k)])},
+        dims=tuple(sizes) + ("pc",),
+        name="coefficient",
     )
     vectors = xr.DataArray(
         data=vh[:k, :],
         coords={dim: data[dim]},
-        dims=('pc', dim),
-        name='weight',
+        dims=("pc", dim),
+        name="weight",
     )
 
     return scores, s[:k], vectors

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "re-nobm-pcc"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = []
 
@@ -8,20 +8,20 @@ authors = []
 dask = {extras = ["array"], version = "^2023.3.2"}
 hvplot = "^0.8.1"
 netcdf4 = "^1.6.3"
-nvidia-cudnn-cu11 = "8.6.0.163"
-#oasim = {git = "https://oceandata.sci.gsfc.nasa.gov/rcs/ian/oasim-rrs.git"} # FIXME oasim not building, see https://github.com/scikit-build/scikit-build-sample-projects/pull/35
-orjson = "3.8.10" # FIXME remove when 3.8.11 install works
+#nvidia-cudnn-cu11 = "8.6.0.163"
+oasim-rrs = {git = "https://oceandata.sci.gsfc.nasa.gov/rcs/ian/oasim-rrs.git"}
+#orjson = "3.8.10" # FIXME remove when 3.8.11 install works
 python = ">=3.11,<3.12"
 scipy = "^1.8.1"
-tensorflow = "~2.12"
-tensorflow-addons = "^0.20.0" # TODO replace when tf.keras.metrics.R2score stable
-tensorflow-probability = "^0.19.0"
-tensorflow-datasets = "^4.9.2"
+#tensorflow = "~2.12"
+#tensorflow-addons = "^0.20.0" # TODO replace when tf.keras.metrics.R2score stable
+#tensorflow-probability = "^0.19.0"
+#tensorflow-datasets = "^4.9.2"
 xarray = "^2022.6.0"
 
 [tool.poetry.group.dev.dependencies]
-dvc = {version = "^2.9.5", extras = ["gdrive"]}
+dvc = {version = "^2.9.5"}
 ipykernel = "^6.21.3"
-ipywidgets = "^8.0.6"
-jupyterlab = "^3.6.3"
+#ipywidgets = "^8.0.6"
 pytest = "^7.0.1"
+black = "^23.7.0"

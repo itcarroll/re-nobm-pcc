@@ -1,11 +1,22 @@
 schema: '2.0'
 stages:
-  nobm_day:
-    cmd: "wget --directory-prefix=\"nobm_day\" --no-parent --no-host-directories --cut-dirs=3\
-      \ --recursive --reject \"*.*\" \"https://gmao.gsfc.nasa.gov/gmaoftp/rousseaux/Ian/\"\
-      \n"
+  simulate:
+    cmd:
+    - mkdir oasim
+    - "srun --job-name=re_nobm_pcc.simulate --output=\"logs/slurm-%x-$j-%3t.out\"\
+      \ --ntasks=288 --mem-per-cpu=20480M --exclude=poseidon-compute-13 task python\
+      \ -O -m re_nobm_pcc.simulate\n"
+    deps:
+    - path: nobm
+      md5: 1969c09f5db81861e86170f151efd445.dir
+      size: 716098958064
+      nfiles: 6912
+    - path: oasim_param
+      md5: 7bca5ebd633e56bea5f6e6cee4644ea9.dir
+      size: 205042
+      nfiles: 17
     outs:
-    - path: nobm_day
-      md5: 9b383b92fb1f1e2010e7068c9d63daa9.dir
-      size: 717093531650
-      nfiles: 6915
+    - path: oasim
+      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
+      size: 1212237505656
+      nfiles: 288

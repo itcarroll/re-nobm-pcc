@@ -1,20 +1,4 @@
 stages:
-  simulate: # FIXME oasim compilation by skbuild is borked
-    cmd:
-    - mkdir data/rrs_day
-    - >
-      srun
-      --job-name=re_nobm_pcc.simulate
-      --output="logs/slurm-%x-$j-%3t.out"
-      --ntasks=288
-      --mem-per-cpu=20480M
-      --exclude=poseidon-compute-13
-      task python -O -m re_nobm_pcc.simulate
-    deps:
-    - data/nobm_day
-    - data/oasim_param
-    outs:
-    - data/rrs_day
   preview:
     cmd: >
       jupyter nbconvert

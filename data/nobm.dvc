@@ -1,0 +1,15 @@
+# raw nobm data was downloaded from the GMAO FTP server with the following:
+# wget
+#   --directory-prefix="nobm"
+#   --no-parent
+#   --no-host-directories
+#   --cut-dirs=3
+#   --recursive
+#   --reject "*.*"
+#   "https://gmao.gsfc.nasa.gov/gmaoftp/rousseaux/Ian/"
+# these data have since been removed from the server
+outs:
+- path: nobm
+  md5: 1969c09f5db81861e86170f151efd445.dir
+  size: 716098958064
+  nfiles: 6912

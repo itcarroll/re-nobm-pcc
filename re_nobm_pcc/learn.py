@@ -6,7 +6,7 @@ import tensorflow_addons as tfa #
 import tensorflow_datasets as tfds
 import tensorflow_probability as tfp
 
-from . import DATA_DIR
+from . import DATADIR
 
 BATCH = 64
 EPOCHS = 8 if __debug__ else 300
@@ -85,7 +85,7 @@ def main(args: list[str] | None = None) -> None:
 
     # ## load dataset
     # batching adapt necessary for correct sequential input shape
-    dataset = tfds.builder('rrs_day_tfds', data_dir=DATA_DIR)
+    dataset = tfds.builder('rrs_day_tfds', data_dir=DATADIR)
     split = ['split[:8%]', 'split[8%:9%]', 'split[9%:10%]']
     if __debug__:
         split = ['split[7:8%]', 'split[8%:9%]', 'split[9%:10%]']
@@ -119,7 +119,7 @@ def main(args: list[str] | None = None) -> None:
         callbacks=[
             tf.keras.callbacks.TerminateOnNaN(),
             tf.keras.callbacks.ModelCheckpoint(
-                filepath=DATA_DIR / 'fit/epoch-{epoch:03d}',
+                filepath=DATADIR / 'fit/epoch-{epoch:03d}',
                 save_weights_only=True,
             ),
         ],
@@ -127,9 +127,9 @@ def main(args: list[str] | None = None) -> None:
         verbose=1 if __debug__ else 2,
     )
     # network with fitted parameters as tf format
-    network.save(str(DATA_DIR/'network'))
+    network.save(str(DATADIR/'network'))
     # training history as Numpy archive
-    np.savez(DATA_DIR/'fit.npz', epoch=fit.epoch, **fit.history)
+    np.savez(DATADIR/'fit.npz', epoch=fit.epoch, **fit.history)
     metrics = {i: fit.history[i][-1] for i in ('loss', 'val_loss')}
 
     # ## calculate metrics
@@ -139,7 +139,7 @@ def main(args: list[str] | None = None) -> None:
     metrics.update({
         k.name: v for k, v in items if not 'loss' in k.name
     })
-    with (DATA_DIR/'metrics.json').open('w') as stream:
+    with (DATADIR/'metrics.json').open('w') as stream:
         json.dump(metrics, stream)
 
 

@@ -2,7 +2,7 @@
 /fit.npz
 /metrics.json
 /network
-/nobm_day
+/nobm
 /oasim_param
-/rrs_day
-/rrs_day_tfds
+/oasim
+/oasim_tfds

@@ -9,7 +9,7 @@ import os
 import numpy as np
 import xarray as xr
 
-from . import DATA_DIR, EXTENSION
+from . import DATADIR, EXTENSION
 
 
 def main(argv=None):
@@ -21,11 +21,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     # prepare filesystm
-    data = DATA_DIR/'oasim'/args.year
+    data = DATADIR/'oasim'/args.year
     data.mkdir(parents=True, exist_ok=True)
 
     # run OASIM on the NOBM data in a tempdir and copy out results
-    nobm = xr.open_mfdataset(str(DATA_DIR/'nobm'/args.year/f'*{EXTENSION}'))
+    nobm = xr.open_mfdataset(str(DATADIR/'nobm'/args.year/f'*{EXTENSION}'))
     var = ['dia', 'chl', 'cya', 'coc', 'tot'] # FIXME missing 'dtc' 'pic' 'cdc' 's' 't'
     nobm = nobm[var]
 
@@ -45,7 +45,7 @@ def oasim(dst, nobm):
     with TemporaryDirectory() as path:
         path = Path(path)
         # make parameter files available to a subprocess at path
-        for item in (DATA_DIR/'oasim_param').glob('*'): # FIXME remove fake 'dtc' 'pic' 'cdc' 's' 't' from DATA_DIR/oasim_param
+        for item in (DATADIR/'oasim_param').glob('*'): # FIXME remove fake 'dtc' 'pic' 'cdc' 's' 't' from DATA_DIR/oasim_param
             (path/item.name).symlink_to(item)
         # capture the roll index
         lonroll = int((nobm['lon'] == 0.0).argmax())

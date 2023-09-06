@@ -1,25 +1,5 @@
 schema: '2.0'
 stages:
-  simulate:
-    cmd:
-    - mkdir data/rrs_day
-    - "srun --job-name=re_nobm_pcc.simulate --output=\"logs/slurm-%x-$j-%3t.out\"\
-      \ --ntasks=288 --mem-per-cpu=20480M --exclude=poseidon-compute-13 task python\
-      \ -O -m re_nobm_pcc.simulate\n"
-    deps:
-    - path: data/nobm_day
-      md5: 9b383b92fb1f1e2010e7068c9d63daa9.dir
-      size: 717093531650
-      nfiles: 6915
-    - path: data/oasim_param
-      md5: 7bca5ebd633e56bea5f6e6cee4644ea9.dir
-      size: 205042
-      nfiles: 17
-    outs:
-    - path: data/rrs_day
-      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
-      size: 1212237505656
-      nfiles: 288
   preprocess:
     cmd: "srun --job-name=re_nobm_pcc.preprocess --output=\"logs/slurm-%x-%j.out\"\
       \ --exclude=poseidon-compute-13 task python -O -m re_nobm_pcc.preprocess\n"
