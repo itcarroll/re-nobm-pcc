@@ -1,5 +1,7 @@
 [core]
     remote = dvcstore
+[cache]
+    dir = /mnt/beegfs-temp/icarroll/RE-NOBM-PCC-cache
 ['remote "dvcstore"']
     url = gdrive://1Tts6oXRyh2i-a26fKw7rfi3WvZQ7KpOi
     gdrive_client_id = 581836491302-6tnvb5ao86365pmb0jg3cfs90f78cn00.apps.googleusercontent.com

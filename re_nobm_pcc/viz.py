@@ -15,7 +15,7 @@ hv.opts.defaults(
     hv.opts.Image(active_tools=[]),
     hv.opts.Scatter(active_tools=[]),
     hv.opts.HexTiles(active_tools=[], tools=['hover']),
-)
+)   
 
 
 def loss(ds, offset=None):
