@@ -2,10 +2,11 @@ schema: '2.0'
 stages:
   simulate:
     cmd:
+    - mkdir -p logs
     - mkdir oasim
-    - "srun --job-name=re_nobm_pcc.simulate --output=\"logs/slurm-%x-$j-%3t.out\"\
-      \ --ntasks=288 --mem-per-cpu=20480M --exclude=poseidon-compute-13 task python\
-      \ -O -m re_nobm_pcc.simulate\n"
+    - "sbatch --wait --job-name=\"re_nobm_pcc.simulate\" --output=\"logs/%x-%j.out\"\
+      \ --array=0-287 --mem-per-cpu=20480M --exclude=poseidon-compute-13 task python
+      -m re_nobm_pcc.simulate\n"
     deps:
     - path: nobm
       md5: 1969c09f5db81861e86170f151efd445.dir
@@ -17,6 +18,6 @@ stages:
       nfiles: 17
     outs:
     - path: oasim
-      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
-      size: 1212237505656
+      md5: a1ccf63bb14b6a60c5fb49130674cee7.dir
+      size: 1254780302688
       nfiles: 288

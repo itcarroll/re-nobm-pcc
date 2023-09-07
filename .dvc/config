@@ -1,1 +1,3 @@
-
+[cache]
+    dir = /mnt/beegfs-temp/icarroll/re-nobm-pcc-cache
+    type = symlink

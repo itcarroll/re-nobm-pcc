@@ -11,7 +11,7 @@ netcdf4 = "^1.6.3"
 #nvidia-cudnn-cu11 = "8.6.0.163"
 oasim-rrs = {git = "https://oceandata.sci.gsfc.nasa.gov/rcs/ian/oasim-rrs.git"}
 #orjson = "3.8.10" # FIXME remove when 3.8.11 install works
-python = ">=3.11,<3.12"
+python = "~3.11"
 scipy = "^1.8.1"
 #tensorflow = "~2.12"
 #tensorflow-addons = "^0.20.0" # TODO replace when tf.keras.metrics.R2score stable

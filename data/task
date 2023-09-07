@@ -1,0 +1,2 @@
+#!/bin/sh
+exec $@ $SLURM_ARRAY_TASK_ID

@@ -2,11 +2,13 @@ stages:
   preview:
     cmd: >
       jupyter nbconvert
+      --execute
+      --ExecutePreprocessor.kernel_name=re-nobm-pcc
       --to=html
       --output-dir=docs
       notebooks/preview.ipynb
     deps:
-    - data/rrs_day
+    - data/oasim
     outs:
     - docs/preview.html
   preprocess:
@@ -17,7 +19,7 @@ stages:
       --exclude=poseidon-compute-13
       task python -O -m re_nobm_pcc.preprocess
     deps:
-    - data/rrs_day
+    - data/oasim
     outs:
     - data/rrs_day_tfds
   learn:
