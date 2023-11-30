@@ -1,2 +1,4 @@
+# git config --local include.path "../.gitconfig"
 [filter "notebook"]
     clean = jupyter nbconvert --to=notebook --ClearOutputPreprocessor.enabled=True --ClearMetadataPreprocessor.enabled=True --stdin --stdout
+    required

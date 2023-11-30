@@ -41,20 +41,16 @@ def svd(data, dim, k=None):
 
     sizes = dict(data.sizes)
     k_default = sizes.pop(dim)
+    pc = "percentage"
     if k is None:
         k = k_default
     u, s, vh = np.linalg.svd(data, full_matrices=False)
-    scores = xr.DataArray(
-        data=u[:, :k] * s[:k],
-        coords={"pc": ("pc", [f"PC{i}" for i in range(k)])},
-        dims=tuple(sizes) + ("pc",),
-        name="coefficient",
+    s2 = s**2
+    return xr.Dataset(
+        {
+            "weights": (list(sizes) + [pc], u[..., :k] * s[:k]),
+            "vectors": ([pc, dim], vh[:k, ...]),
+            pc: (pc, (s2 / s2.sum())[:k]),
+            dim: (dim, data[dim].data),
+        }
     )
-    vectors = xr.DataArray(
-        data=vh[:k, :],
-        coords={dim: data[dim]},
-        dims=("pc", dim),
-        name="weight",
-    )
-
-    return scores, s[:k], vectors

@@ -75,7 +75,6 @@ def read_nobm(year: int, month: int) -> xr.Dataset:
     ds["tot"] = da.where(da != np.float32(5.9939996e12))
     # everything else uses the same NaN flag
     ds = ds.where(ds != NUMNAN)
-
     return ds
 
 
@@ -101,6 +100,7 @@ def main(argv: list[str]) -> None:
         value = value.squeeze("date")
         rlwn = modlwn1nm(*[value[i].data for i in ("phy",) + OC])
         rrs.append(rrs1nm(rlwn))
+    logging.info(f"reshaping datasets")
     rrs = xr.DataArray(
         np.stack(rrs),
         coords={"wavelength": np.arange(250, 751)},
@@ -111,10 +111,15 @@ def main(argv: list[str]) -> None:
     ds = ds.roll({"lon": ds.sizes["lon"] // 2})
     ds["lon"] = ("lon", np.linspace(-180, 180, ds.sizes["lon"]))
     ds["lat"] = ("lat", np.linspace(-84, 71.4, ds.sizes["lat"]))
+    # stack and drop nan
+    ds = ds.stack({"example": ["date", "lon", "lat"]})
+    ds = ds.transpose("example", ...).dropna("example")
 
     # ## save
-    logging.info(f"writing phy and rrs to {output}")
+    logging.info(f"writing to {output}")
     ds.to_netcdf(output)
+
+    # ## kerchunk
 
 
 if __name__ == "__main__":

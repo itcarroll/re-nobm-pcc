@@ -18,6 +18,6 @@ stages:
       nfiles: 17
     outs:
     - path: oasim
-      md5: a1ccf63bb14b6a60c5fb49130674cee7.dir
-      size: 1254780302688
+      md5: 784797a7c8ab2a5a06a56fcefd421670.dir
+      size: 766306705176
       nfiles: 288
