@@ -19,7 +19,7 @@ xarray = "^2023.10.1"
 panel = "^1.2.2"
 
 [tool.poetry.group.dev.dependencies]
-dvc = {version = "^2.9.5"}
+dvc = {version = "^2.9.5", extras = ["s3"]}
 ipykernel = "^6.21.3"
 # ipywidgets = "^8.0.6"
 pytest = "^7.0.1"

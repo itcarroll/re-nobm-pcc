@@ -1,3 +1,7 @@
 [cache]
-    dir = /mnt/beegfs-temp/icarroll/re-nobm-pcc-cache
     type = symlink
+[core]
+    remote = origin
+['remote "origin"']
+    url = s3://dvc
+    endpointurl = https://dagshub.com/itcarroll/re-nobm-pcc.s3
