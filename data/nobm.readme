@@ -1,0 +1,12 @@
+Raw NOBM data was downloaded from temporary hosting on the GMAO FTP server.
+
+```{shell}
+wget
+  --directory-prefix="nobm"
+  --no-parent
+  --no-host-directories
+  --cut-dirs=3
+  --recursive
+  --reject "*.*"
+  "https://gmao.gsfc.nasa.gov/gmaoftp/rousseaux/Ian/"
+```

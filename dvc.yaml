@@ -1,36 +1,33 @@
+vars:
+- package: re_nobm_pcc
 stages:
-  preview:
-    cmd: >
-      jupyter nbconvert
-      --execute
-      --ExecutePreprocessor.kernel_name=re-nobm-pcc
-      --to=html
-      --output-dir=docs
-      notebooks/preview.ipynb
+  simulate:
+    cmd: python -m ${package}.simulate
     deps:
-    - data/oasim
+    - data/oasim_param
+    - data/nobm
     outs:
-    - docs/preview.html
+    - data/oasim
   preprocess:
     cmd: >
       srun
-      --job-name=re_nobm_pcc.preprocess
+      --job-name=${package}.preprocess
       --output="logs/slurm-%x-%j.out"
       --exclude=poseidon-compute-13
-      task python -O -m re_nobm_pcc.preprocess
+      task python -O -m ${package}.preprocess
     deps:
     - data/oasim
     outs:
-    - data/rrs_day_tfds
+    - data/labelled.zarr
   learn:
     cmd: >
       srun
-      --job-name=re_nobm_pcc.learn
+      --job-name=${package}.learn
       --output="logs/slurm-%x-%j.out"
       --cpus-per-task=6
       --mem-per-cpu=25600M
       --exclude=poseidon-compute-13
-      task python -O -m re_nobm_pcc.learn
+      task python -O -m ${package}.learn
 #      --gres=gpu:2
     deps:
     - data/rrs_day_tfds
@@ -40,15 +37,3 @@ stages:
     - data/network
     metrics:
     - data/metrics.json
-  evaluate:
-    cmd: >
-      jupyter nbconvert
-      --execute
-      --ExecutePreprocessor.kernel_name=re-nobm-pcc
-      --to=html
-      --output-dir=docs
-      notebooks/evaluate.ipynb
-    deps:
-    - data/network
-    outs:
-    - docs/evaluate.html
