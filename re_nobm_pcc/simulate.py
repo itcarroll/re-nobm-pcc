@@ -12,16 +12,15 @@ if TYPE_CHECKING:
     import pathlib
 
 
-def main() -> None:
+def main(period: np.ndarray, **kwargs) -> None:
 
     # run the oasim calculation (includes writing to zarr)
-    period = np.arange("1998-01", "2022-01", dtype=np.dtype("datetime64[M]"))
     bag = db.from_sequence(period, 12)
     with dask.diagnostics.ProgressBar():
-        bag.map(oasim).compute()
+        bag.map(oasim, **kwargs).compute()
 
 
-def oasim(period: np.datetime64, path: "pathlib.Path" = DATADIR, **kwargs) -> None:
+def oasim(period: np.datetime64, path: "pathlib.Path", **kwargs) -> None:
 
     # import f2py modules here, b/c they cannot be pickled by dask
     from oasim_rrs import modlwn1nm, rrs1nm
@@ -55,4 +54,7 @@ def oasim(period: np.datetime64, path: "pathlib.Path" = DATADIR, **kwargs) -> No
 
 
 if __name__ == "__main__":
-    main()
+    main(
+        period=np.arange("1998-01", "2022-01", dtype=np.dtype("datetime64[M]")),
+        path=DATADIR,
+    )

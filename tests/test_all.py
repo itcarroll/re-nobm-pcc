@@ -1,24 +1,35 @@
 from pathlib import Path
-import os
+import shutil
 
 import numpy as np
 import pytest
 import xarray as xr
+import dask.config
 
-# from re_nobm_pcc import preprocess  # , perceptron, cnn
+from re_nobm_pcc import CHUNKSIZE
 from re_nobm_pcc.core import ecdf, read_nobm
-from re_nobm_pcc.simulate import oasim
-from re_nobm_pcc.preprocess import combine_nobm_oasim
+from re_nobm_pcc import simulate
+from re_nobm_pcc import preprocess
+
+
+@pytest.fixture(params=["synchronous", "threads"])
+def cache_simulate(request):
+    scheduler = request.param
+    dask.config.set(scheduler=scheduler)
+    path = Path(request.config.cache.makedir(scheduler))
+    if not (path / "oasim").exists():
+        period = np.arange("1998-01", "1998-03", dtype=np.dtype("datetime64[M]"))
+        simulate.main(period, path=path, days=2)
+    yield path
 
 
 @pytest.fixture
-def cache_oasim(pytestconfig):
-    path = Path(pytestconfig.cache.makedir("data"))
-    if not (path / "oasim").exists():
-        oasim(np.datetime64("1998-01"), path, days=2)
-        oasim(np.datetime64("1998-02"), path, days=2)
+def cache_preprocess(cache_simulate):
+    path = cache_simulate
+    if not (path / "labelled.zarr").exists():
+        split = 2 ** np.array((5, 4, 3)) * CHUNKSIZE
+        preprocess.main(split=split, path=path)
     yield path
-    # TODO cleanup?
 
 
 def test_ecdf():
@@ -31,21 +42,37 @@ def test_ecdf():
 
 def test_read_nobm():
     period = np.datetime64("2007-01")
-    ds = read_nobm(period, days=4)
-    assert ds.sizes["date"] == 4
+    dataset = read_nobm(period, days=4)
+    assert dataset.sizes["date"] == 4
 
 
 def test_oasim(tmpdir):
     period = np.datetime64("2003-07")
-    oasim(period, Path(tmpdir), days=2)
+    simulate.oasim(period, Path(tmpdir), days=2)
     yearmonth = period.item().strftime("%Y%m")
     dataset = xr.open_dataset(tmpdir / "oasim" / f"rrs{yearmonth}.nc", engine="netcdf4")
     assert dataset.sizes["date"] == 2
 
 
-def test_preprocess(cache_oasim):
-    combine_nobm_oasim(cache_oasim)
-    assert False
+def test_simulate(cache_simulate):
+    try:
+        dataset = xr.open_dataset(cache_simulate / "oasim" / "rrs199802.nc")
+        assert dataset.sizes["date"] == 2
+    except Exception as fail:
+        shutil.rmtree(cache_preprocess / "labelled.zarr")
+        raise fail
+
+
+def test_preprocess(cache_preprocess):
+    path = cache_preprocess / "labelled.zarr"
+    try:
+        dataset = xr.open_dataset(path, engine="zarr", group="train", chunks={})
+        assert set(dataset.variables) == {"x", "y"}
+        assert dataset["x"][0, 0].notnull()
+        assert dataset["y"][0, 0].notnull()
+    except Exception as fail:
+        shutil.rmtree(path)
+        raise fail
 
 
 def test_split():

@@ -9,12 +9,7 @@ stages:
     outs:
     - data/oasim
   preprocess:
-    cmd: >
-      srun
-      --job-name=${package}.preprocess
-      --output="logs/slurm-%x-%j.out"
-      --exclude=poseidon-compute-13
-      task python -O -m ${package}.preprocess
+    cmd: python -m ${package}.preprocess
     deps:
     - data/oasim
     outs:
