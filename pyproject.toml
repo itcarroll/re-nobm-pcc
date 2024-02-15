@@ -11,7 +11,7 @@ authors = []
 [tool.poetry.dependencies]
 python = "^3.10,<3.12"
 black = "^24.1.1"
-dask = "^2024.1.1"
+dask = {extras = ["distributed"], version = "^2024.2.0"}
 dvc = {extras = ["ssh"], version = "^3.43.1"}
 hvplot = "^0.9.0"
 ipykernel = "^6.21.3"

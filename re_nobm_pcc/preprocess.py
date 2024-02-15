@@ -1,14 +1,13 @@
 from typing import TYPE_CHECKING
 
+import dask.array as da
 import numpy as np
 import xarray as xr
-import dask.array as da
 
 from . import DATADIR, WAVELENGTH, TAXA, CHUNKSIZE
 from .core import read_nobm
 
 if TYPE_CHECKING:
-    import typing
     import pathlib
 
 
@@ -46,18 +45,16 @@ def main(split: np.ndarray, path: "pathlib.Path") -> None:
     labelled = preprocess_oasim(labelled, oasim)
     labelled = preprocess_nobm(labelled)
 
-    # write coordinates, without chunks, to store on disk
-    dataset = xr.Dataset(coords=labelled.coords)
-    dataset.compute().to_zarr(path / "labelled.zarr")
-
     # write train, validate, and test groups to store on disk
-    start = 0
+    path = path / "labelled.zarr"
+    i = 0
     for item in zip(split, ("train", "validate", "test")):
-        stop, group = item
-        dataset = labelled.isel({"n": slice(start, stop)})
-        dataset = dataset.drop_vars(list(labelled.coords))
-        dataset.to_zarr(path / "labelled.zarr", group=group)
-        start = stop
+        n, group = item
+        dataset = labelled.isel({"n": slice(i, i + n)})
+        coords = dataset.coords
+        dataset.drop_vars(list(coords)).to_zarr(path, group=group)
+        coords.to_dataset().to_zarr(path, group=f"{group}/coords")
+        i += n
 
 
 def preprocess_oasim(dataset: xr.Dataset, array: xr.DataArray) -> xr.Dataset:
@@ -107,7 +104,11 @@ def update_nobm(array: xr.DataArray, coords: list[str]) -> xr.DataArray:
 
 
 if __name__ == "__main__":
-    main(
-        split=2 ** np.array((17, 14, 12)) * CHUNKSIZE,
-        path=DATADIR,
-    )
+    from dask.distributed import Client
+
+    with Client() as client:
+        print(f"Dashboard link: {client.dashboard_link}")
+        main(
+            split=2 ** np.array((9, 7, 5)) * CHUNKSIZE,
+            path=DATADIR,
+        )

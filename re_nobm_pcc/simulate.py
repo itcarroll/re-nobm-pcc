@@ -1,9 +1,8 @@
 from typing import TYPE_CHECKING
 
+import dask.bag as db
 import numpy as np
 import xarray as xr
-import dask.bag as db
-import dask.diagnostics
 
 from . import DATADIR, NUMNAN, OC
 from .core import read_nobm, oasim_param
@@ -16,8 +15,7 @@ def main(period: np.ndarray, **kwargs) -> None:
 
     # run the oasim calculation (includes writing to zarr)
     bag = db.from_sequence(period, 12)
-    with dask.diagnostics.ProgressBar():
-        bag.map(oasim, **kwargs).compute()
+    bag.map(oasim, **kwargs).compute()
 
 
 def oasim(period: np.datetime64, path: "pathlib.Path", **kwargs) -> None:
@@ -54,7 +52,11 @@ def oasim(period: np.datetime64, path: "pathlib.Path", **kwargs) -> None:
 
 
 if __name__ == "__main__":
-    main(
-        period=np.arange("1998-01", "2022-01", dtype=np.dtype("datetime64[M]")),
-        path=DATADIR,
-    )
+    from dask.distributed import Client
+
+    with Client() as client:
+        print(f"Dashboard link: {client.dashboard_link}")
+        main(
+            period=np.arange("1998-01", "2022-01", dtype=np.dtype("datetime64[M]")),
+            path=DATADIR,
+        )

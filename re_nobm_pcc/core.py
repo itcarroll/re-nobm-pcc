@@ -13,7 +13,8 @@ OC = ("tot", "dtc", "pic", "cdc", "t", "s")
 BGC = ("alk", "dic", "doc", "fco", "h", "irn", "pco", "pp", "rnh", "rno", "sil", "zoo")
 WAVELENGTH = tuple(range(350, 731))
 NUMNAN = np.array(9.99e11, dtype="f4")
-CHUNKSIZE = 2**10
+BATCHSIZE = 2**7
+CHUNKSIZE = 2**13
 
 
 @contextmanager

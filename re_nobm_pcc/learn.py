@@ -1,20 +1,99 @@
+from typing import TYPE_CHECKING
 import json
 
 import numpy as np
+import xarray as xr
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 # import tensorflow_addons as tfa
 # import tensorflow_datasets as tfds
-# import tensorflow_probability as tfp
 
-from . import DATADIR
-from .preprocess import open_dataset
+from . import DATADIR, CHUNKSIZE
 
-BATCH = 8 if __debug__ else 64
-EPOCHS = 8 if __debug__ else 300
+if TYPE_CHECKING:
+    import pathlib
+
+
+# from .preprocess import open_dataset
+
 PATIENCE = 50
-DIAG_SHIFT = 1e-5  # TODO working? avoidable?
+# DIAG_SHIFT = 1e-5  # TODO working? avoidable?
 LEARNING_RATE = 3e-6  # TODO possible to speed up?
+
+
+def main(epochs: int, path: "pathlib.Path") -> None:
+
+    # prepare data for training
+    # TODO batch, prefetch
+    # TODO cache
+    train, validate = fitting_dataset(path / "labelled.zarr")
+    s = train["x"].shape[1:]
+    t = train["y"].shape[1:]
+
+    # compile the model
+    # TODO normalization
+    # TODO build
+    # TODO loss
+    model = prepare_model(s, t)
+
+    # fit the model
+    # TODO stopping
+    # TODO checkpoints
+    fit = model.fit(
+        train,
+        epochs=epochs,
+        callbacks=[
+            tf.keras.callbacks.TerminateOnNaN(),
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath=path / "checkpoint/epoch-{epoch:03d}",
+                save_weights_only=True,
+            ),
+            tf.keras.callbacks.EarlyStopping(patience=PATIENCE),
+        ],
+        validation_data=validate,
+    )
+
+    # save
+    # network with fitted parameters as keras format
+    model.save(str(path / "model.keras"))
+    # training history as Numpy archive
+    fit.history["epoch"] = fit.epoch
+    fit = xr.Dataset({k: ("epoch", v) for k, v in fit.history})
+    fit.to_zarr(path / "fit.zarr")
+
+
+def prepare_model(input_shape: tuple[int], output_shape: tuple[int]) -> tf.keras.Model:
+
+    # shape of the layer required by tfd
+    units = output_shape[0] * 2
+
+    # function to map final layer to distribution parameters
+    def tfd(layer):
+        loc = layer[:units]
+        scale = layer[units:]
+        return tfp.distributions.MultivariateNormalDiag(loc, scale)
+
+    network = tf.keras.Sequential(
+        [
+            tf.keras.layers.Dense(units, "linear"),
+            tfp.layers.DistributionLambda(tfd),
+        ]
+    )
+    network.compile(
+        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss=lambda y, layer: -layer.log_prob(y),
+    )
+
+    return network
+
+
+def fitting_dataset(path: "pathlib.Path") -> tf.data.Dataset:
+    train = xr.open_dataset(path, group="train", chunks={})
+    tf_train = tf.data.Dataset.from_tensor_slices((train["x"], train["y"]))
+    train = train.batch(CHUNKSIZE)
+    validate = xr.open_dataset(path, group="validate", chunks={})
+    return
 
 
 def make_network(event_size: int) -> tf.keras.Model:
@@ -77,7 +156,7 @@ def add_metrics(network: tf.keras.Model) -> tf.keras.Model:
     return metrics
 
 
-def main(args: list[str] | None = None) -> None:
+def _main(args: list[str] | None = None) -> None:
     if __debug__:
         tf.config.run_functions_eagerly(True)
 
@@ -138,4 +217,7 @@ def main(args: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(
+        epochs=300,
+        path=DATADIR,
+    )

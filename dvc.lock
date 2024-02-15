@@ -19,3 +19,17 @@ stages:
       md5: 9c5ae1fde61178aae2177edafa7343fa.dir
       size: 1183883100336
       nfiles: 288
+  preprocess:
+    cmd: python -m re_nobm_pcc.preprocess
+    deps:
+    - path: data/oasim
+      hash: md5
+      md5: 9c5ae1fde61178aae2177edafa7343fa.dir
+      size: 1183883100336
+      nfiles: 288
+    outs:
+    - path: data/labelled.zarr
+      hash: md5
+      md5: 2747bedf0d6b57c9f0bb6369c71a3e6b.dir
+      size: 6473861254
+      nfiles: 2806

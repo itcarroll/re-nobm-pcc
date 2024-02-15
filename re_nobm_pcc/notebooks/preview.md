@@ -15,23 +15,6 @@ jupyter:
 # Preview
 
 
-## Issues
-
-
-ideas
-- oasim to zarr
-- mixture-density networks
-- dashboard with phy shifted to one species, OC vars otherwise the same, with tap to compare spectra
-- transform of outputs
-- pca outputs, to reduce dimensionality as needed
-- pca inputs, to reduce complexity
-- test for signal
-  - 1 vs 2 nearest neighbor outputs
-- dealing with unbalanced data (are they unbalanced?)
-- try classification only
-- relative abundances
-
-
 ## Imports
 
 ```python
@@ -95,6 +78,25 @@ long_name = {
 
 ## Raw Data
 
+
+Roughly how much?
+
+```python
+dataset = xr.open_dataset(DATADIR / "oasim" / "rrs201205.nc", engine="netcdf4")
+daily = dataset["rrs"].isel({"wavelength": 104, "date": 13}).notnull().sum().item()
+m = daily * (np.datetime64("2022-01-01") - np.datetime64("1998-01-01")).astype(int)
+m
+```
+
+In base 2, here's about 1%
+
+```python
+(2 ** 22) / m
+```
+
+```python
+(2 ** 22) / (2 ** 13)
+```
 
 ### Phytoplankton Absorption and Scattering
 
