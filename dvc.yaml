@@ -8,27 +8,24 @@ stages:
     - data/nobm
     outs:
     - data/oasim
+    frozen: true
   preprocess:
     cmd: python -m ${package}.preprocess
     deps:
+    - data/nobm
     - data/oasim
     outs:
     - data/labelled.zarr
+    frozen: false
   learn:
-    cmd: >
-      srun
-      --job-name=${package}.learn
-      --output="logs/slurm-%x-%j.out"
-      --cpus-per-task=6
-      --mem-per-cpu=25600M
-      --exclude=poseidon-compute-13
-      task python -O -m ${package}.learn
-#      --gres=gpu:2
+    cmd: python -m ${package}.learn
     deps:
-    - data/rrs_day_tfds
+    - data/labelled.zarr
     outs:
-    - data/fit
-    - data/fit.npz
-    - data/network
+    - data/fit.zarr
+    - data/model.keras
+    - data/checkpoints
+  evaluate:
+    cmd: python -m ${package}.evaluate
     metrics:
     - data/metrics.json

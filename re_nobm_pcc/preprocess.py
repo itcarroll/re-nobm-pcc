@@ -4,11 +4,14 @@ import dask.array as da
 import numpy as np
 import xarray as xr
 
-from . import DATADIR, WAVELENGTH, TAXA, CHUNKSIZE
+from . import DATADIR, TAXA, CHUNKSIZE
 from .core import read_nobm
 
 if TYPE_CHECKING:
     import pathlib
+
+
+WAVELENGTH = tuple(range(350, 731))
 
 
 def main(split: np.ndarray, path: "pathlib.Path") -> None:
@@ -53,17 +56,20 @@ def main(split: np.ndarray, path: "pathlib.Path") -> None:
         dataset = labelled.isel({"n": slice(i, i + n)})
         coords = dataset.coords
         dataset.drop_vars(list(coords)).to_zarr(path, group=group)
-        coords.to_dataset().to_zarr(path, group=f"{group}/coords")
+        coords.to_dataset().load().to_zarr(path, group=f"{group}/coords")
         i += n
 
 
 def preprocess_oasim(dataset: xr.Dataset, array: xr.DataArray) -> xr.Dataset:
+
     array = array.rename({"m": "n", "wavelength": "s"})
     dataset["x"] = array.chunk({"n": CHUNKSIZE, "s": -1})
+
     return dataset
 
 
 def preprocess_nobm(dataset: xr.Dataset) -> xr.Dataset:
+
     # create an empty dask array for parallel reading of nobm
     n = dataset.sizes["n"]
     t = len(TAXA)
@@ -75,10 +81,12 @@ def preprocess_nobm(dataset: xr.Dataset) -> xr.Dataset:
         name="y",
     )
     array = xr.merge((dataset.coords, array))["y"]
+
     # map the read function over chunks
     coords = list(array.coords)
     coords.remove("t")
     dataset["y"] = array.map_blocks(update_nobm, args=(coords,), template=array)
+
     return dataset
 
 

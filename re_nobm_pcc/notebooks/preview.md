@@ -32,7 +32,7 @@ import param as p
 import xarray as xr
 
 from re_nobm_pcc import DATADIR, TAXA, WAVELENGTH
-#from re_nobm_pcc import kit, preprocess
+from re_nobm_pcc import core
 #from re_nobm_pcc.simulate import NUMNAN, OC
 #from oasim_rrs import modlwn1nm, rrs1nm
 
@@ -88,14 +88,11 @@ m = daily * (np.datetime64("2022-01-01") - np.datetime64("1998-01-01")).astype(i
 m
 ```
 
-In base 2, here's about 1%
+In base 2, this "n" is about 1%
 
 ```python
-(2 ** 22) / m
-```
-
-```python
-(2 ** 22) / (2 ** 13)
+n = 2**22
+n / m
 ```
 
 ### Phytoplankton Absorption and Scattering
@@ -122,6 +119,9 @@ ds = xr.concat(ds, "component")
 The NOBM data provided by Cecile contains the ocean constituents that are sufficient inputs for the OASIM Fortran library to calculte Rrs.
 
 Below 350nm however, there is no phytoplankton absorption data so those Rrs values should be ignored.
+
+
+### Dashboard
 
 ```python
 paths = (DATADIR / "oasim").glob("*.nc")
@@ -233,7 +233,13 @@ pn.Row(
 )
 ```
 
-## Sample of Preprocessed Data
+## Preprocessed Data
+
+```python
+dataset = xr.open_dataset(DATADIR / "labelled.zarr", engine="zarr", group="test", chunks={})
+coords = xr.load_dataset(DATADIR / "labelled.zarr", engine="zarr", group="test/coords")
+dataset = xr.merge((dataset, coords))
+```
 
 ```python
 rng = np.random.default_rng(1234)
@@ -253,11 +259,16 @@ y = xr.DataArray(np.sqrt(sample[1]), coords={"components": np.array(TAXA)}, dims
 ### Inputs
 
 ```python
-x.hvplot.line(groupby="example", ylim=(0, 0.02))
+dataset = dataset.set_xindex(("date", "lon", "lat"))
 ```
 
 ```python
-svd = kit.svd(x - x.mean("example"), "wavelength", 8)
+spectrum = dataset["x"].interactive().isel(n=pn.widgets.IntSlider)
+spectrum.hvplot.line(ylim=(0, 0.015))
+```
+
+```python
+svd = core.svd(dataset["x"] - dataset["x"].mean("n"), "s", 8)
 ```
 
 ```python
@@ -334,8 +345,15 @@ scores = xr.merge((svd, y)).drop_dims("wavelength")
 ## Spectum with Taxa
 
 ```python
-x, y = next(train.shuffle(32).as_numpy_iterator())
-(hv.Curve(x) + hv.Bars(y)).opts(shared_axes=False)
+idataset = dataset.interactive().isel(n=pn.widgets.IntSlider)
+```
+
+```python
+(idataset["x"].hvplot.line(ylim=(0, 0.015)) + idataset["y"].hvplot.bar(ylim=(0, 1))).cols(1)
+```
+
+```python
+dataset["y"].min("n").compute()
 ```
 
 ---

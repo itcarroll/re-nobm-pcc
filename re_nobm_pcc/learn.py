@@ -6,40 +6,26 @@ import xarray as xr
 import tensorflow as tf
 import tensorflow_probability as tfp
 
-# import tensorflow_addons as tfa
-# import tensorflow_datasets as tfds
-
 from . import DATADIR, CHUNKSIZE
 
 if TYPE_CHECKING:
     import pathlib
 
-
-# from .preprocess import open_dataset
-
-PATIENCE = 50
-# DIAG_SHIFT = 1e-5  # TODO working? avoidable?
-LEARNING_RATE = 3e-6  # TODO possible to speed up?
+PATIENCE = 10
+BATCHSIZE = 64
+LEARNING_RATE = 3e-5
 
 
 def main(epochs: int, path: "pathlib.Path") -> None:
 
     # prepare data for training
-    # TODO batch, prefetch
-    # TODO cache
-    train, validate = fitting_dataset(path / "labelled.zarr")
-    s = train["x"].shape[1:]
-    t = train["y"].shape[1:]
+    train, validate = open_dataset(path / "labelled.zarr")
+    shape = (i.shape for i in train.element_spec)
 
-    # compile the model
-    # TODO normalization
-    # TODO build
-    # TODO loss
-    model = prepare_model(s, t)
+    # the untrained model
+    model = prepare_model(*shape)
 
-    # fit the model
-    # TODO stopping
-    # TODO checkpoints
+    # model training
     fit = model.fit(
         train,
         epochs=epochs,
@@ -54,46 +40,71 @@ def main(epochs: int, path: "pathlib.Path") -> None:
         validation_data=validate,
     )
 
-    # save
+    # save results
     # network with fitted parameters as keras format
     model.save(str(path / "model.keras"))
-    # training history as Numpy archive
+    # training history as a dataset
     fit.history["epoch"] = fit.epoch
-    fit = xr.Dataset({k: ("epoch", v) for k, v in fit.history})
+    fit = xr.Dataset({k: ("epoch", v) for k, v in fit.history.items()})
     fit.to_zarr(path / "fit.zarr")
 
 
 def prepare_model(input_shape: tuple[int], output_shape: tuple[int]) -> tf.keras.Model:
 
-    # shape of the layer required by tfd
-    units = output_shape[0] * 2
+    # size of the layer feeding tfp.distributions
+    # nb: consider the number of parameters for each output
+    units = output_shape[1] * 3
+    tfd = prepare_tfd(output_shape)
+
+    input = tf.keras.Input(input_shape[-1:])
+    layer = tf.keras.layers.Dense(units, "linear")(input)
+    output = tfp.layers.DistributionLambda(tfd)(layer)
+
+    model = tf.keras.Model([input], [output])
+    model.compile(
+        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss=nll,
+    )
+
+    return model
+
+
+def prepare_tfd(shape):
+
+    # event size
+    n = shape[-1]
+    m = 2 * n
 
     # function to map final layer to distribution parameters
-    def tfd(layer):
-        loc = layer[:units]
-        scale = layer[units:]
-        return tfp.distributions.MultivariateNormalDiag(loc, scale)
+    def tfd(t):
+        distribution = tfp.distributions.Gamma(
+            concentration=tf.math.softplus(t[..., :n]),
+            log_rate=t[..., n:m],
+        )
+        inflated = tfp.distributions.Inflated(
+            distribution,
+            inflated_loc_logits=t[..., m:],
+        )
+        return tfp.distributions.Independent(inflated)
 
-    network = tf.keras.Sequential(
-        [
-            tf.keras.layers.Dense(units, "linear"),
-            tfp.layers.DistributionLambda(tfd),
-        ]
+    return tfd
+
+
+def nll(y_true, y_pred):
+    # negative log-likelihood
+    return -y_pred.log_prob(y_true)
+
+
+def open_dataset(path: "pathlib.Path") -> tf.data.Dataset:
+    dataset = xr.open_dataset(path, engine="zarr", group="train", chunks={})
+    train = tf.data.Dataset.from_tensor_slices((dataset["x"].data, dataset["y"].data))
+    train = train.batch(BATCHSIZE).shuffle(CHUNKSIZE).prefetch(tf.data.AUTOTUNE)
+    dataset = xr.open_dataset(path, engine="zarr", group="validate", chunks={})
+    validate = tf.data.Dataset.from_tensor_slices(
+        (dataset["x"].data, dataset["y"].data)
     )
-    network.compile(
-        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
-        loss=lambda y, layer: -layer.log_prob(y),
-    )
-
-    return network
-
-
-def fitting_dataset(path: "pathlib.Path") -> tf.data.Dataset:
-    train = xr.open_dataset(path, group="train", chunks={})
-    tf_train = tf.data.Dataset.from_tensor_slices((train["x"], train["y"]))
-    train = train.batch(CHUNKSIZE)
-    validate = xr.open_dataset(path, group="validate", chunks={})
-    return
+    validate = validate.batch(CHUNKSIZE)
+    return train, validate
 
 
 def make_network(event_size: int) -> tf.keras.Model:

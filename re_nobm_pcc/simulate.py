@@ -4,7 +4,7 @@ import dask.bag as db
 import numpy as np
 import xarray as xr
 
-from . import DATADIR, NUMNAN, OC
+from . import DATADIR, F_NAN, OC
 from .core import read_nobm, oasim_param
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ def oasim(period: np.datetime64, path: "pathlib.Path", **kwargs) -> None:
         coords={"wavelength": np.arange(250, 751, dtype="int32")},
         dims=("date", "lon", "lat", "wavelength"),
     )
-    rrs = rrs.where(rrs != NUMNAN)
+    rrs = rrs.where(rrs != F_NAN)
     dataset = xr.merge((xr.Dataset({"rrs": rrs}), nobm["t"].coords))
 
     # save outputs

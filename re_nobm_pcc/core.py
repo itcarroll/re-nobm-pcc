@@ -11,9 +11,7 @@ DATADIR = (Path(__file__).parents[1] / "data").absolute()
 TAXA = ("dia", "chl", "cya", "coc", "din", "pha")
 OC = ("tot", "dtc", "pic", "cdc", "t", "s")
 BGC = ("alk", "dic", "doc", "fco", "h", "irn", "pco", "pp", "rnh", "rno", "sil", "zoo")
-WAVELENGTH = tuple(range(350, 731))
-NUMNAN = np.array(9.99e11, dtype="f4")
-BATCHSIZE = 2**7
+F_NAN = np.array(9.99e11, dtype="f4")
 CHUNKSIZE = 2**13
 
 
@@ -127,7 +125,7 @@ def read_nobm(start: np.datetime64, days: int | None = None) -> xr.Dataset:
     da = ds["tot"]
     ds["tot"] = da.where(da != np.float32(5.9939996e12))
     # everything else uses the same NaN flag
-    ds = ds.where(ds != NUMNAN)
+    ds = ds.where(ds != F_NAN)
 
     return ds
 

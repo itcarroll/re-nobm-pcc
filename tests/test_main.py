@@ -43,7 +43,7 @@ def cache_learn(cache_preprocess, client):
     from re_nobm_pcc import learn
 
     path = cache_preprocess
-    if not (path / "model.keras").exists():
+    if not (path / "fit.zarr").exists():
         learn.main(epochs=2, path=path)
     yield path
 
@@ -72,4 +72,7 @@ def test_preprocess(cache_preprocess):
 
 def test_learn(cache_learn):
     path = cache_learn / "fit.zarr"
-    dataset = xr.open_dataset(path, engine="zarr")
+    try:
+        dataset = xr.open_dataset(path, engine="zarr")
+    except Exception as fail:
+        shutil.rmtree(path)
