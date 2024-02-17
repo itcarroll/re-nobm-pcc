@@ -11,9 +11,10 @@ from . import DATADIR, CHUNKSIZE
 if TYPE_CHECKING:
     import pathlib
 
+EPOCHS = 300
 PATIENCE = 10
 BATCHSIZE = 64
-LEARNING_RATE = 3e-5
+LEARNING_RATE = 3e-4
 
 
 def main(epochs: int, path: "pathlib.Path") -> None:
@@ -57,6 +58,7 @@ def prepare_model(input_shape: tuple[int], output_shape: tuple[int]) -> tf.keras
     tfd = prepare_tfd(output_shape)
 
     input = tf.keras.Input(input_shape[-1:])
+    # layer = tf.keras.layers.Dense(64, "sigmoid")(input)
     layer = tf.keras.layers.Dense(units, "linear")(input)
     output = tfp.layers.DistributionLambda(tfd)(layer)
 
@@ -229,6 +231,6 @@ def _main(args: list[str] | None = None) -> None:
 
 if __name__ == "__main__":
     main(
-        epochs=300,
+        epochs=EPOCHS,
         path=DATADIR,
     )

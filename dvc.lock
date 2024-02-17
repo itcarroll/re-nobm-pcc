@@ -22,6 +22,11 @@ stages:
   preprocess:
     cmd: python -m re_nobm_pcc.preprocess
     deps:
+    - path: data/nobm
+      hash: md5
+      md5: 1969c09f5db81861e86170f151efd445.dir
+      size: 716098958064
+      nfiles: 6912
     - path: data/oasim
       hash: md5
       md5: 9c5ae1fde61178aae2177edafa7343fa.dir
@@ -33,3 +38,26 @@ stages:
       md5: 2747bedf0d6b57c9f0bb6369c71a3e6b.dir
       size: 6473861254
       nfiles: 2806
+  learn:
+    cmd: python -m re_nobm_pcc.learn
+    deps:
+    - path: data/labelled.zarr
+      hash: md5
+      md5: 2747bedf0d6b57c9f0bb6369c71a3e6b.dir
+      size: 6473861254
+      nfiles: 2806
+    outs:
+    - path: data/checkpoint
+      hash: md5
+      md5: 5d55f2c4869e234be378849bcf465365.dir
+      size: 25293975
+      nfiles: 601
+    - path: data/fit.zarr
+      hash: md5
+      md5: 2d55cc688a7dc60843060450be8a345a.dir
+      size: 5272
+      nfiles: 12
+    - path: data/model.keras
+      hash: md5
+      md5: 6c9ac9cb0121fc52ce6963c899c090d6
+      size: 105672

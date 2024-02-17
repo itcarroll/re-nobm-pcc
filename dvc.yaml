@@ -24,8 +24,11 @@ stages:
     outs:
     - data/fit.zarr
     - data/model.keras
-    - data/checkpoints
+    - data/checkpoint
   evaluate:
     cmd: python -m ${package}.evaluate
+    deps:
+    - data/fit.zarr
+    - data/model.keras
     metrics:
     - data/metrics.json
