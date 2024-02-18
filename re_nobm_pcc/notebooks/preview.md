@@ -31,8 +31,8 @@ import panel as pn
 import param as p
 import xarray as xr
 
-from re_nobm_pcc import DATADIR, TAXA, WAVELENGTH
-from re_nobm_pcc import core
+from re_nobm_pcc import DATADIR, TAXA
+from re_nobm_pcc.core import svd, read_nobm
 #from re_nobm_pcc.simulate import NUMNAN, OC
 #from oasim_rrs import modlwn1nm, rrs1nm
 
@@ -239,16 +239,7 @@ pn.Row(
 dataset = xr.open_dataset(DATADIR / "labelled.zarr", engine="zarr", group="test", chunks={})
 coords = xr.load_dataset(DATADIR / "labelled.zarr", engine="zarr", group="test/coords")
 dataset = xr.merge((dataset, coords))
-```
-
-```python
-rng = np.random.default_rng(1234)
-sample, *_ = preprocess.open_dataset((1,), rng, 2 ** 14)
-sample = sample.as_numpy_iterator()
-```
-
-```python
-sample = next(sample)
+#dataset = dataset.set_xindex(("date", "lon", "lat"))
 ```
 
 ```python
@@ -259,23 +250,20 @@ y = xr.DataArray(np.sqrt(sample[1]), coords={"components": np.array(TAXA)}, dims
 ### Inputs
 
 ```python
-dataset = dataset.set_xindex(("date", "lon", "lat"))
-```
-
-```python
 spectrum = dataset["x"].interactive().isel(n=pn.widgets.IntSlider)
 spectrum.hvplot.line(ylim=(0, 0.015))
 ```
 
 ```python
-svd = core.svd(dataset["x"] - dataset["x"].mean("n"), "s", 8)
+dataset_svd = svd(dataset["x"] - dataset["x"].mean("n"), "s", 8)
 ```
 
 ```python
-svd["vectors"].hvplot.line(groupby="percentage", frame_width=400).layout().cols(2)
+dataset_svd["vectors"].hvplot.line(groupby="percentage", frame_width=400).layout().cols(2)
 ```
 
 ```python
+# i think the following was about creating monospecific Rrs ... ?
 os.chdir(DATADIR)
 ```
 
@@ -323,6 +311,27 @@ phy.hvplot.line(x="wavelength", by="component")
 ```
 
 ### Outputs
+
+```python
+y = dataset["y"]
+y = y.where(np.log10(y) > -10, 0)
+```
+
+```python
+np.round((y == 0).sum("n").compute() / y.sizes["n"], 4)
+```
+
+```python
+interactive = y.interactive().sel(t=pn.widgets.DiscreteSlider)
+```
+
+```python
+np.log10(interactive + 1).hvplot.hist()
+```
+
+```python
+hv.Histogram(interactive.sel(t=pn.widgets.DiscreteSlider).values)
+```
 
 ```python
 scores = xr.merge((svd, y)).drop_dims("wavelength")

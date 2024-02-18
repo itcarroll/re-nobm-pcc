@@ -90,7 +90,16 @@ The size of the labelled dataset is reduced (about 1% of available pixels), and 
 - test,       262_144
 
 
-### regal-tort
+## leafy-tipi
+
+
+Mainly a fix to ceric-guns that thresholds y so all have zero inflation (sets values less than 1e-10 to 0), but also a new way to get the tfd shape (should have no effect).
+
+Network (changes from below)
+- none
+
+
+## ceric-guns
 
 
 A first attempt with the independent inflated gamma.
@@ -101,7 +110,7 @@ Network
 - input, 381
 - output, 6
 - Independent Inflated(log_logits) Gamma(concentration=softmax, log_rate), 6 * 3
-- adam, 3e-4
+- adam, 3e-5
 - negative log likelihood
 
 <!-- #region jp-MarkdownHeadingCollapsed=true -->

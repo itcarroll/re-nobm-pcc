@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 EPOCHS = 300
 PATIENCE = 10
 BATCHSIZE = 64
-LEARNING_RATE = 3e-4
+LEARNING_RATE = 3e-5
 
 
 def main(epochs: int, path: "pathlib.Path") -> None:
@@ -50,19 +50,20 @@ def main(epochs: int, path: "pathlib.Path") -> None:
     fit.to_zarr(path / "fit.zarr")
 
 
-def prepare_model(input_shape: tuple[int], output_shape: tuple[int]) -> tf.keras.Model:
+def prepare_model(input: tf.TensorShape, output: tf.TensorShape) -> tf.keras.Model:
 
-    # size of the layer feeding tfp.distributions
-    # nb: consider the number of parameters for each output
-    units = output_shape[1] * 3
-    tfd = prepare_tfd(output_shape)
+    # parameters for layers input to the tfp.distribution output
+    units, shape, tfd = prepare_tfd(output[1:])
 
-    input = tf.keras.Input(input_shape[-1:])
-    # layer = tf.keras.layers.Dense(64, "sigmoid")(input)
-    layer = tf.keras.layers.Dense(units, "linear")(input)
+    # build model with the Keras Functional API
+    input = tf.keras.Input(input[-1:])
+    layer = tf.keras.layers.Dense(64, "sigmoid")(input)
+    layer = tf.keras.layers.Dense(units, "linear")(layer)
+    layer = tf.keras.layers.Reshape(shape)(layer)
     output = tfp.layers.DistributionLambda(tfd)(layer)
-
     model = tf.keras.Model([input], [output])
+
+    # compile with negative log-likelihood loss
     model.compile(
         optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
         loss=nll,
@@ -71,25 +72,27 @@ def prepare_model(input_shape: tuple[int], output_shape: tuple[int]) -> tf.keras
     return model
 
 
-def prepare_tfd(shape):
+def prepare_tfd(shape: tf.TensorShape) -> tuple:
 
-    # event size
-    n = shape[-1]
-    m = 2 * n
+    shape = (*shape, 3)
+    units = np.prod(shape)
 
     # function to map final layer to distribution parameters
     def tfd(t):
         distribution = tfp.distributions.Gamma(
-            concentration=tf.math.softplus(t[..., :n]),
-            log_rate=t[..., n:m],
+            concentration=tf.math.softplus(t[..., 0]),
+            log_rate=t[..., 1],
         )
         inflated = tfp.distributions.Inflated(
             distribution,
-            inflated_loc_logits=t[..., m:],
+            inflated_loc_logits=t[..., 2],
         )
-        return tfp.distributions.Independent(inflated)
+        return tfp.distributions.Independent(
+            inflated,
+            reinterpreted_batch_ndims=1,
+        )
 
-    return tfd
+    return units, shape, tfd
 
 
 def nll(y_true, y_pred):
@@ -97,15 +100,20 @@ def nll(y_true, y_pred):
     return -y_pred.log_prob(y_true)
 
 
-def open_dataset(path: "pathlib.Path") -> tf.data.Dataset:
-    dataset = xr.open_dataset(path, engine="zarr", group="train", chunks={})
-    train = tf.data.Dataset.from_tensor_slices((dataset["x"].data, dataset["y"].data))
+def open_dataset(path: "pathlib.Path") -> tuple[tf.data.Dataset]:
+
+    ds = []
+    for item in ["train", "validate"]:
+        dataset = xr.open_dataset(path, engine="zarr", group=item, chunks={})
+        x = dataset["x"]
+        y = dataset["y"]
+        y = y.where(np.log10(y) > -10, 0)  # nb. kludge, but safe b/c no NaN
+        ds.append(tf.data.Dataset.from_tensor_slices((x.data, y.data)))
+
+    train, validate = ds
     train = train.batch(BATCHSIZE).shuffle(CHUNKSIZE).prefetch(tf.data.AUTOTUNE)
-    dataset = xr.open_dataset(path, engine="zarr", group="validate", chunks={})
-    validate = tf.data.Dataset.from_tensor_slices(
-        (dataset["x"].data, dataset["y"].data)
-    )
     validate = validate.batch(CHUNKSIZE)
+
     return train, validate
 
 
