@@ -1,53 +1,63 @@
 schema: '2.0'
 stages:
-  preprocess:
-    cmd: "srun --job-name=re_nobm_pcc.preprocess --output=\"logs/slurm-%x-%j.out\"\
-      \ --exclude=poseidon-compute-13 task python -O -m re_nobm_pcc.preprocess\n"
+  simulate:
+    cmd: python -m re_nobm_pcc.simulate
     deps:
-    - path: data/rrs_day
-      md5: 75e5cf07e9e0b847019259af69b11a6e.dir
-      size: 1212237505656
+    - path: data/nobm
+      hash: md5
+      md5: 1969c09f5db81861e86170f151efd445.dir
+      size: 716098958064
+      nfiles: 6912
+    - path: data/oasim_param
+      hash: md5
+      md5: 7bd1ea0ba36b210a024a8bda99cb052e.dir
+      size: 205042
+      nfiles: 17
+    outs:
+    - path: data/oasim
+      hash: md5
+      md5: 9c5ae1fde61178aae2177edafa7343fa.dir
+      size: 1183883100336
+      nfiles: 288
+  preprocess:
+    cmd: python -m re_nobm_pcc.preprocess
+    deps:
+    - path: data/nobm
+      hash: md5
+      md5: 1969c09f5db81861e86170f151efd445.dir
+      size: 716098958064
+      nfiles: 6912
+    - path: data/oasim
+      hash: md5
+      md5: 9c5ae1fde61178aae2177edafa7343fa.dir
+      size: 1183883100336
       nfiles: 288
     outs:
-    - path: data/rrs_day_tfds
-      md5: cb2e137af13962029b11eab0944a7ab0.dir
-      size: 522219650687
-      nfiles: 1026
+    - path: data/labelled.zarr
+      hash: md5
+      md5: 2747bedf0d6b57c9f0bb6369c71a3e6b.dir
+      size: 6473861254
+      nfiles: 2806
   learn:
-    cmd: "srun --job-name=re_nobm_pcc.learn --output=\"./logs/slurm-%x-%j.out\" --cpus-per-task=6\
-      \ --mem-per-cpu=25600M --exclude=poseidon-compute-13 task python -m re_nobm_pcc.learn\n"
+    cmd: python -m re_nobm_pcc.learn
     deps:
-    - path: data/rrs_day_tfds
-      md5: cb2e137af13962029b11eab0944a7ab0.dir
-      size: 522219650687
-      nfiles: 1026
-    params:
-      params.yaml:
-        project-dir: .
+    - path: data/labelled.zarr
+      hash: md5
+      md5: 2747bedf0d6b57c9f0bb6369c71a3e6b.dir
+      size: 6473861254
+      nfiles: 2806
     outs:
-    - path: data/fit
-      md5: 9fb46cec76d52623212ebb4b6b94930b.dir
-      size: 3353019
-      nfiles: 17
-    - path: data/fit.npz
-      md5: 6a9798496c55339d4871e9d17f1e6323
-      size: 944
-    - path: data/metrics.json
-      md5: f7462d21a914c283c03fb89ce76a2a34
-      size: 897
-    - path: data/network
-      md5: e1c193eb0b7c926c31fd17babe421c8a.dir
-      size: 1057598
-      nfiles: 5
-  evaluate:
-    cmd: "jupyter nbconvert --execute --ExecutePreprocessor.kernel_name=re-nobm-pcc\
-      \ --to=html --output-dir=docs notebooks/evaluate.ipynb\n"
-    deps:
-    - path: data/network
-      md5: e1c193eb0b7c926c31fd17babe421c8a.dir
-      size: 1057598
-      nfiles: 5
-    outs:
-    - path: docs/evaluate.html
-      md5: 54163964d2a356566ff153a06f36ab07
-      size: 4427444
+    - path: data/checkpoint
+      hash: md5
+      md5: 5d55f2c4869e234be378849bcf465365.dir
+      size: 25293975
+      nfiles: 601
+    - path: data/fit.zarr
+      hash: md5
+      md5: 2d55cc688a7dc60843060450be8a345a.dir
+      size: 5272
+      nfiles: 12
+    - path: data/model.keras
+      hash: md5
+      md5: 6c9ac9cb0121fc52ce6963c899c090d6
+      size: 105672

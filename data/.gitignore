@@ -1,9 +1,8 @@
-/logs
-/fit
-/fit.npz
-/metrics.json
-/network
 /nobm
 /oasim_param
 /oasim
-/oasim_tfds
+/labelled.zarr
+/model.keras
+/fit.zarr
+/checkpoint
+/metrics.json

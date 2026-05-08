@@ -1,7 +1,7 @@
 [cache]
     type = symlink
+    dir = remote://nfs/re-nobm-pcc/.dvc/cache
 [core]
     remote = origin
 ['remote "origin"']
-    url = s3://dvc
-    endpointurl = https://dagshub.com/itcarroll/re-nobm-pcc.s3
+    url = remote://nfs/re-nobm-pcc/.dvc/cache

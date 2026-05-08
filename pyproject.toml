@@ -4,24 +4,25 @@ version = "0.2.0"
 description = ""
 authors = []
 
+[tool.jupytext.formats]
+"notebooks/" = "ipynb"
+"re_nobm_pcc/notebooks/" = "md"
+
 [tool.poetry.dependencies]
-dask = {extras = ["array"], version = "^2023.3.2"}
+python = "^3.10,<3.12"
+black = "^24.1.1"
+dask = {extras = ["distributed"], version = "^2024.2.0"}
+dvc = {extras = ["ssh"], version = "^3.43.1"}
+geoviews = "^1.11.1"
 hvplot = "^0.9.0"
+ipykernel = "^6.21.3"
 netcdf4 = "^1.6.3"
 oasim-rrs = {git = "https://oceandata.sci.gsfc.nasa.gov/rcs/ian/oasim-rrs.git"}
-python = "^3.10,<3.12"
-scipy = "^1.8.1"
-tensorflow = "~2.14"
-# tensorflow-addons = "^0.20.0" # TODO replace when tf.keras.metrics.R2score stable
-# tensorflow-probability = "^0"
-# tensorflow-datasets = "^4.9.2"
-xarray = "^2023.10.1"
 panel = "^1.2.2"
-
-[tool.poetry.group.dev.dependencies]
-dvc = {version = "^2.9.5", extras = ["s3"]}
-ipykernel = "^6.21.3"
-# ipywidgets = "^8.0.6"
-pytest = "^7.0.1"
-black = "^23.7.0"
-nbconvert = "^7.10.0"
+pytest = "^8.0.0"
+scipy = "^1.8.1"
+tensorflow = "^2.14"
+tensorflow-probability = "^0.23.0"
+# tensorflow-addons = "^0.20.0" # TODO replace when tf.keras.metrics.R2score stable
+xarray = "^2024.1.1"
+zarr = "^2.16.1"

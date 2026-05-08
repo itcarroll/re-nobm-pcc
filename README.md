@@ -9,7 +9,7 @@ pretty light-weight).
 Instead, we aim to emulate the NOBM variables as a proof-of-concept for
 learning about PCC from PACE.
 
-## Getting Started (WIP)
+## Getting Started (outdated)
 
 merge these into older instructions ...
 
@@ -48,9 +48,9 @@ run. Configure (one time only) and launch a Jupyter server to enable.
     1. `jupyter serverextension enable --py jupyter_http_over_ws`
     1. `jupyter lab --NotebookApp.allow_origin='https://colab.research.google.com'`
 
-## Reproducing (WIP)
+## Reproducing (outdated)
 
-1. dvc exp run --temp --set-param project-dir="$PWD" learn && exit 
+1. dvc exp run --temp --set-param project-dir="$PWD" learn && exit
 
 ## Acknowledgements
 

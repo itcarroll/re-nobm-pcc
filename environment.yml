@@ -1,0 +1,5 @@
+name: re-nobm-pcc
+dependencies:
+  - python=3.11
+  - hdf5
+  - conda-forge::gfortran

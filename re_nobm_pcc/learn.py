@@ -1,20 +1,120 @@
+from typing import TYPE_CHECKING
 import json
 
 import numpy as np
+import xarray as xr
 import tensorflow as tf
+import tensorflow_probability as tfp
 
-# import tensorflow_addons as tfa
-# import tensorflow_datasets as tfds
-# import tensorflow_probability as tfp
+from . import DATADIR, CHUNKSIZE
 
-from . import DATADIR
-from .preprocess import open_dataset
+if TYPE_CHECKING:
+    import pathlib
 
-BATCH = 8 if __debug__ else 64
-EPOCHS = 8 if __debug__ else 300
-PATIENCE = 50
-DIAG_SHIFT = 1e-5  # TODO working? avoidable?
-LEARNING_RATE = 3e-6  # TODO possible to speed up?
+EPOCHS = 300
+PATIENCE = 10
+BATCHSIZE = 64
+LEARNING_RATE = 3e-5
+
+
+def main(epochs: int, path: "pathlib.Path") -> None:
+
+    # prepare data for training
+    train, validate = open_dataset(path / "labelled.zarr")
+    shape = (i.shape for i in train.element_spec)
+
+    # the untrained model
+    model = prepare_model(*shape)
+
+    # model training
+    fit = model.fit(
+        train,
+        epochs=epochs,
+        callbacks=[
+            tf.keras.callbacks.TerminateOnNaN(),
+            tf.keras.callbacks.ModelCheckpoint(
+                filepath=path / "checkpoint/epoch-{epoch:03d}",
+                save_weights_only=True,
+            ),
+            tf.keras.callbacks.EarlyStopping(patience=PATIENCE),
+        ],
+        validation_data=validate,
+    )
+
+    # save results
+    # network with fitted parameters as keras format
+    model.save(str(path / "model.keras"))
+    # training history as a dataset
+    fit.history["epoch"] = fit.epoch
+    fit = xr.Dataset({k: ("epoch", v) for k, v in fit.history.items()})
+    fit.to_zarr(path / "fit.zarr")
+
+
+def prepare_model(input: tf.TensorShape, output: tf.TensorShape) -> tf.keras.Model:
+
+    # parameters for layers input to the tfp.distribution output
+    units, shape, tfd = prepare_tfd(output[1:])
+
+    # build model with the Keras Functional API
+    input = tf.keras.Input(input[-1:])
+    layer = tf.keras.layers.Dense(64, "sigmoid")(input)
+    layer = tf.keras.layers.Dense(units, "linear")(layer)
+    layer = tf.keras.layers.Reshape(shape)(layer)
+    output = tfp.layers.DistributionLambda(tfd)(layer)
+    model = tf.keras.Model([input], [output])
+
+    # compile with negative log-likelihood loss
+    model.compile(
+        optimizer=tf.optimizers.Adam(learning_rate=LEARNING_RATE),
+        loss=nll,
+    )
+
+    return model
+
+
+def prepare_tfd(shape: tf.TensorShape) -> tuple:
+
+    shape = (*shape, 3)
+    units = np.prod(shape)
+
+    # function to map final layer to distribution parameters
+    def tfd(t):
+        distribution = tfp.distributions.Gamma(
+            concentration=tf.math.softplus(t[..., 0]),
+            log_rate=t[..., 1],
+        )
+        inflated = tfp.distributions.Inflated(
+            distribution,
+            inflated_loc_logits=t[..., 2],
+        )
+        return tfp.distributions.Independent(
+            inflated,
+            reinterpreted_batch_ndims=1,
+        )
+
+    return units, shape, tfd
+
+
+def nll(y_true, y_pred):
+    # negative log-likelihood
+    return -y_pred.log_prob(y_true)
+
+
+def open_dataset(path: "pathlib.Path") -> tuple[tf.data.Dataset]:
+
+    ds = []
+    for item in ["train", "validate"]:
+        dataset = xr.open_dataset(path, engine="zarr", group=item, chunks={})
+        x = dataset["x"]
+        y = dataset["y"]
+        y = y.where(np.log10(y) > -10, 0)  # nb. kludge, but safe b/c no NaN
+        ds.append(tf.data.Dataset.from_tensor_slices((x.data, y.data)))
+
+    train, validate = ds
+    train = train.batch(BATCHSIZE).shuffle(CHUNKSIZE).prefetch(tf.data.AUTOTUNE)
+    validate = validate.batch(CHUNKSIZE)
+
+    return train, validate
 
 
 def make_network(event_size: int) -> tf.keras.Model:
@@ -77,7 +177,7 @@ def add_metrics(network: tf.keras.Model) -> tf.keras.Model:
     return metrics
 
 
-def main(args: list[str] | None = None) -> None:
+def _main(args: list[str] | None = None) -> None:
     if __debug__:
         tf.config.run_functions_eagerly(True)
 
@@ -138,4 +238,7 @@ def main(args: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(
+        epochs=EPOCHS,
+        path=DATADIR,
+    )
