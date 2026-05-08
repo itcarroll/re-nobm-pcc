@@ -1,7 +1,1 @@
-[cache]
-    type = symlink
-    dir = remote://nfs/re-nobm-pcc/.dvc/cache
-[core]
-    remote = origin
-['remote "origin"']
-    url = remote://nfs/re-nobm-pcc/.dvc/cache
+
